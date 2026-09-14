@@ -1,0 +1,49 @@
+# Secrets and local environments
+.env
+.env.*
+!.env.example
+**/.env
+**/.env.*
+!.env_example
+
+# Python environments and caches
+.venv/
+**/.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
+# Generated images, logs, and runtime caches
+Code/generation/generated_images/
+Code/generation/gpt_image_2_logs
+Code/evaluation/*.log
+Code/evaluation/wiki_summary_cache.json
+*.log
+
+# LaTeX build artifacts; keep source, bibliography, and final PDF only if desired
+Template/*.aux
+Template/*.bbl
+Template/*.blg
+Template/*.fdb_latexmk
+Template/*.fls
+Template/*.log
+Template/*.out
+Template/*.synctex.gz
+Template/*.toc
+Template/*.pdf
+Template/parts/*.aux
+Template/parts/*.fdb_latexmk
+Template/parts/*.fls
+Template/parts/*.log
+
+# Private and unrelated source material
+RP/
+References/
+2025_MSc_Stella_compressed.pdf
+Gmail - *.pdf
+Template/Posters/
+Template/Presentations/
+
+# OS/editor files
+.DS_Store
+.vscode/

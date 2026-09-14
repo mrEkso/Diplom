@@ -1,0 +1,16 @@
+Category,Model,N,RQ1_Type_Match_Rate,RQ2_Feature_Present_Rate,Avg_Hallucinations
+Famous Landmarks & Architecture,gpt_image_2,25,0.88,0.84,0.04
+Famous Landmarks & Architecture,scads_flux2_dev,25,0.88,0.64,0.04
+Famous Landmarks & Architecture,scads_flux2_klein,25,0.88,0.44,0.4
+Historical Figures,gpt_image_2,22,0.9090909090909091,0.36363636363636365,0.36363636363636365
+Historical Figures,scads_flux2_dev,22,0.9090909090909091,0.13636363636363635,0.6818181818181818
+Historical Figures,scads_flux2_klein,22,0.8181818181818182,0.13636363636363635,0.5454545454545454
+Random,gpt_image_2,192,,,0.8802083333333334
+Random,scads_flux2_dev,192,,,0.8125
+Random,scads_flux2_klein,192,,,1.5260416666666667
+Rare Flora/Fauna,gpt_image_2,25,0.96,0.52,0.32
+Rare Flora/Fauna,scads_flux2_dev,25,1.0,0.44,0.28
+Rare Flora/Fauna,scads_flux2_klein,25,0.92,0.24,1.2
+Specific Cultural Artifacts/Foods,gpt_image_2,25,0.36,0.76,0.6
+Specific Cultural Artifacts/Foods,scads_flux2_dev,25,0.4,0.6,0.8
+Specific Cultural Artifacts/Foods,scads_flux2_klein,25,0.32,0.32,1.48

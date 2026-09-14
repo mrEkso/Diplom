@@ -1,0 +1,4 @@
+Model,N_Images,Spearman_Props_vs_Hallucinations,Spearman_Props_vs_Image_Hallucination_Rate
+gpt_image_2,289,0.1193818682907127,0.10032559182102808
+scads_flux2_dev,298,0.08649091773748357,0.06317353064913805
+scads_flux2_klein,298,0.13539452505766555,0.07840546401511751

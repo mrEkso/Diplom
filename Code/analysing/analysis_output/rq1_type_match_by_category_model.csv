@@ -1,0 +1,13 @@
+Category,Model,Type_Match_Rate,N
+Famous Landmarks & Architecture,gpt_image_2,0.88,25
+Famous Landmarks & Architecture,scads_flux2_dev,0.88,25
+Famous Landmarks & Architecture,scads_flux2_klein,0.88,25
+Historical Figures,gpt_image_2,0.9090909090909091,22
+Historical Figures,scads_flux2_dev,0.92,25
+Historical Figures,scads_flux2_klein,0.8,25
+Rare Flora/Fauna,gpt_image_2,0.96,25
+Rare Flora/Fauna,scads_flux2_dev,1.0,25
+Rare Flora/Fauna,scads_flux2_klein,0.92,25
+Specific Cultural Artifacts/Foods,gpt_image_2,0.36,25
+Specific Cultural Artifacts/Foods,scads_flux2_dev,0.4,25
+Specific Cultural Artifacts/Foods,scads_flux2_klein,0.32,25

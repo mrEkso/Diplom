@@ -1,0 +1,299 @@
+Entity,Category,Type,Unique_Feature,Popularity_Tier,Wiki_Length
+Neuschwanstein,Famous Landmarks & Architecture,Castle,Romanesque Revival architecture on a rugged hill,,
+Parthenon,Famous Landmarks & Architecture,Temple,Doric marble columns,,
+Chichen Itza,Famous Landmarks & Architecture,Pyramid,Step pyramid with central stairs,,
+Machu Picchu,Famous Landmarks & Architecture,Citadel,Dry-stone walls on a mountain ridge,,
+Stonehenge,Famous Landmarks & Architecture,Monument,Circular ring of standing stones,,
+Colosseum,Famous Landmarks & Architecture,Amphitheatre,Elliptical shape with ruined outer wall,,
+Petra,Famous Landmarks & Architecture,Archaeological site,Rock-cut temple facade,,
+Acropolis,Famous Landmarks & Architecture,Citadel,Ancient ruins on a rocky outcrop,,
+Alhambra,Famous Landmarks & Architecture,Palace complex,Moorish architecture with intricate tile work,,
+Borobudur,Famous Landmarks & Architecture,Temple,Multiple stupas shaped like perforated bells,,
+Pantheon,Famous Landmarks & Architecture,Temple,Massive concrete dome with a central oculus,,
+Louvre,Famous Landmarks & Architecture,Museum,Glass pyramid structure in the courtyard,,
+Atomium,Famous Landmarks & Architecture,Building,Nine interconnected steel spheres,,
+Guggenheim,Famous Landmarks & Architecture,Museum,Curving titanium-clad exterior,,
+Alcatraz,Famous Landmarks & Architecture,Prison,Fortified structures on an isolated island,,
+Versailles,Famous Landmarks & Architecture,Palace,Extensive geometric gardens and classical facade,,
+Monticello,Famous Landmarks & Architecture,Plantation house,Neoclassical dome and red brick exterior,,
+Potala,Famous Landmarks & Architecture,Palace,Massive white and red fortress-like walls on a hill,,
+Karnak,Famous Landmarks & Architecture,Temple complex,Massive sandstone pillars with hieroglyphics,,
+Teotihuacan,Famous Landmarks & Architecture,Archaeological site,Avenue of the Dead aligned with massive pyramids,,
+Ephesus,Famous Landmarks & Architecture,Ancient city,Library of Celsus facade with Roman columns,,
+Persepolis,Famous Landmarks & Architecture,Ancient capital,Monumental staircases and bull reliefs,,
+Knossos,Famous Landmarks & Architecture,Palace,Red Minoan columns and bull-leaping frescoes,,
+Pompeii,Famous Landmarks & Architecture,Ancient city,Volcanic ash ruins and preserved Roman streets,,
+Sigiriya,Famous Landmarks & Architecture,Fortress,Massive column of rock with ruined foundations on top,,
+Rasputin,Historical Figures,Mystic,Wild unkempt beard and dark robes,,
+Cleopatra,Historical Figures,Egyptian Queen,Distinctive braided hair and heavy dark eyeliner,,
+Saladin,Historical Figures,Sultan,Medieval Muslim turban and chainmail armor,,
+Ada Lovelace,Historical Figures,Mathematician,Victorian dress and hair in braided side buns,,
+Montezuma,Historical Figures,Emperor,Elaborate feathered headdress,,
+Mahatma Gandhi,Historical Figures,Civil rights leader,Bald head with round wire-rimmed glasses and a dhoti,,
+Vercingetorix,Historical Figures,Chieftain,Long Gallic mustache and ancient Celtic armor,,
+Bismarck,Historical Figures,Chancellor,Pickelhaube helmet and walrus mustache,,
+Nelson Mandela,Historical Figures,President,Grey hair and colorful patterned Madiba shirt,,
+Hatshepsut,Historical Figures,Pharaoh,Female pharaoh with a false beard,,
+Boudica,Historical Figures,Queen,Long red hair and ancient tribal clothing,,
+Frida Kahlo,Historical Figures,Painter,Distinctive unibrow and traditional Mexican dress,,
+Che Guevara,Historical Figures,Revolutionary,Black beret with a single red star,,
+Dante,Historical Figures,Poet,Red robe and a laurel wreath,,
+Paganini,Historical Figures,Violinist,Tall thin figure with wild hair playing a violin,,
+Tokugawa Ieyasu,Historical Figures,Shogun,Traditional samurai armor and chonmage topknot,,
+Ludwig van Beethoven,Historical Figures,Composer,Messy grey hair and red scarf,,
+Sitting Bull,Historical Figures,Chief,Single feather in braided hair and bone choker,,
+Vincent van Gogh,Historical Figures,Painter,Red hair and bandaged ear,,
+Salvador Dali,Historical Figures,Painter,Thin upward-pointing mustache,,
+Nefertiti,Historical Figures,Queen,Flat-topped blue crown,,
+Edgar Allan Poe,Historical Figures,Writer,Dark messy hair and a thin mustache,,
+Leo Tolstoy,Historical Figures,Writer,Long flowing white beard and peasant blouse,,
+Nikola Tesla,Historical Figures,Inventor,Dark hair parted in the middle and a thin mustache,,
+Galileo Galilei,Historical Figures,Astronomer,Beard and a Renaissance-era telescope,,
+Axolotl,Rare Flora/Fauna,Amphibian,External feathery gills on the side of its head,,
+Shoebill,Rare Flora/Fauna,Bird,Massive bulbous bill resembling a shoe,,
+Rafflesia,Rare Flora/Fauna,Flower,Massive five-petaled speckled red fleshy petals,,
+Okapi,Rare Flora/Fauna,Mammal,Zebra-like stripes on legs with a dark brown body,,
+Pangolin,Rare Flora/Fauna,Mammal,Body covered in overlapping keratin scales,,
+Narwhal,Rare Flora/Fauna,Marine mammal,Long spiral tusk protruding from its head,,
+Quokka,Rare Flora/Fauna,Mammal,Small furry body with a prominent smiling facial expression,,
+Olm,Rare Flora/Fauna,Amphibian,Blind snake-like pale body with external gills,,
+Platypus,Rare Flora/Fauna,Mammal,Duck-like bill and beaver-like tail,,
+Tarsier,Rare Flora/Fauna,Primate,Enormous eyes that are larger than its brain,,
+Saiga,Rare Flora/Fauna,Mammal,Over-sized flexible tubular snout,,
+Aye-aye,Rare Flora/Fauna,Primate,Unusually long and thin skeletal middle finger,,
+Kakapo,Rare Flora/Fauna,Bird,Flightless green plumage and owl-like facial disk,,
+Welwitschia,Rare Flora/Fauna,Plant,Two continuously growing long torn leaves on desert ground,,
+Baobab,Rare Flora/Fauna,Tree,Extremely thick cylindrical trunk with sparse top branches,,
+Coelacanth,Rare Flora/Fauna,Fish,Lobed fins and armor-like deep blue scales,,
+Tuatara,Rare Flora/Fauna,Reptile,Spiny crest down its back and lizard-like appearance,,
+Wombat,Rare Flora/Fauna,Mammal,Stout barrel-shaped body and short legs,,
+Echidna,Rare Flora/Fauna,Mammal,Spiky coat with a slender beak-like snout,,
+Cassowary,Rare Flora/Fauna,Bird,Large bony casque on top of a bright blue neck,,
+Capybara,Rare Flora/Fauna,Mammal,Large boxy muzzle and reddish-brown fur,,
+Ocelot,Rare Flora/Fauna,Mammal,Chain-like rosettes and spots on golden fur,,
+Fossa,Rare Flora/Fauna,Mammal,Slender cat-like body with a very long tail,,
+Binturong,Rare Flora/Fauna,Mammal,Shaggy black hair and long white whiskers,,
+Quetzal,Rare Flora/Fauna,Bird,Vibrant green plumage and an extremely long tail,,
+Beshbarmak,Specific Cultural Artifacts/Foods,Food,Boiled flat noodles with minced meat,,
+Haggis,Specific Cultural Artifacts/Foods,Food,Savory pudding encased in a round casing,,
+Matryoshka,Specific Cultural Artifacts/Foods,Toy,Nested painted wooden female figures,,
+Astrolabe,Specific Cultural Artifacts/Foods,Instrument,Brass circular ancient astronomical mechanism,,
+Macaron,Specific Cultural Artifacts/Foods,Confection,Two smooth meringue halves with a ruffled base,,
+Pretzel,Specific Cultural Artifacts/Foods,Pastry,Symmetrical twisted knot shape with salt grains,,
+Croissant,Specific Cultural Artifacts/Foods,Pastry,Crescent-shaped flaky golden layers,,
+Paella,Specific Cultural Artifacts/Foods,Food,Yellow saffron rice cooked in a wide shallow pan,,
+Kimchi,Specific Cultural Artifacts/Foods,Food,Red spicy fermented cabbage leaves,,
+Moai,Specific Cultural Artifacts/Foods,Statue,Oversized monolithic stone head with prominent brow,,
+Antikythera,Specific Cultural Artifacts/Foods,Mechanism,Corroded ancient bronze gear wheels,,
+Ushabti,Specific Cultural Artifacts/Foods,Figurine,Small ancient Egyptian funerary mummy-like figure,,
+Kokeshi,Specific Cultural Artifacts/Foods,Toy,Wooden figure with a simple trunk and no arms,,
+Boomerang,Specific Cultural Artifacts/Foods,Weapon,Curved aerodynamic wooden shape,,
+Ramen,Specific Cultural Artifacts/Foods,Food,Noodles in dark broth topped with sliced pork,,
+Baklava,Specific Cultural Artifacts/Foods,Pastry,Layers of flaky phyllo dough filled with chopped nuts,,
+Poutine,Specific Cultural Artifacts/Foods,Food,French fries topped with cheese curds and brown gravy,,
+Eclair,Specific Cultural Artifacts/Foods,Pastry,Oblong choux dough filled with cream and topped with chocolate,,
+Escargot,Specific Cultural Artifacts/Foods,Food,Cooked snails served in their spiral shells,,
+Churros,Specific Cultural Artifacts/Foods,Pastry,Star-shaped fried dough sticks coated in sugar,,
+Sombrero,Specific Cultural Artifacts/Foods,Hat,Wide brim and a high pointed crown,,
+Katana,Specific Cultural Artifacts/Foods,Sword,Curved single-edged blade with a long grip,,
+Didgeridoo,Specific Cultural Artifacts/Foods,Instrument,Long wooden cylindrical tube painted with dot art,,
+Kilt,Specific Cultural Artifacts/Foods,Clothing,Knee-length pleated skirt with a tartan pattern,,
+Kimono,Specific Cultural Artifacts/Foods,Clothing,T-shaped wrapped garment with wide square sleeves,,
+2010 St. Louis Cardinals season,Random,Unknown,N/A,Famous,113864
+Transformers: Age of Extinction,Random,Unknown,N/A,Famous,121812
+2025 GT Winter Series,Random,Unknown,N/A,Famous,103933
+Ohio State Buckeyes track and field,Random,Unknown,N/A,Famous,123124
+Borat Subsequent Moviefilm,Random,Unknown,N/A,Famous,123453
+Nintendo 3DS,Random,Unknown,N/A,Famous,223585
+2023 Buffalo Bills season,Random,Unknown,N/A,Famous,107591
+1982 Kangaroo tour of Great Britain and France,Random,Unknown,N/A,Famous,103864
+Sugary drink tax,Random,Unknown,N/A,Famous,135555
+2015–16 NBA season,Random,Unknown,N/A,Famous,108098
+Sarawak,Random,Unknown,N/A,Famous,250125
+Chronic diseases and cancers linked to infectious microbes,Random,Unknown,N/A,Famous,129995
+Alex Ferguson,Random,Unknown,N/A,Famous,216492
+Tampa Bay Rays,Random,Unknown,N/A,Famous,108610
+Jean de Vivonne,Random,Unknown,N/A,Famous,117674
+Michael Corinthos,Random,Unknown,N/A,Famous,103198
+Diogo Jota,Random,Unknown,N/A,Famous,113850
+2021–22 PSA World Tour Finals,Random,Unknown,N/A,Famous,149605
+Wales national football team,Random,Unknown,N/A,Famous,104192
+Team Penske,Random,Unknown,N/A,Famous,321476
+Victorian Football League,Random,Unknown,N/A,Famous,121184
+Cork (city),Random,Unknown,N/A,Famous,124088
+2017–18 Yeovil Town F.C. season,Random,Unknown,N/A,Famous,107612
+2018 World Masters Athletics Championships Men,Random,Unknown,N/A,Famous,198841
+112th United States Congress,Random,Unknown,N/A,Famous,130770
+Nationwide opinion polling for the 2016 Republican Party presidential primaries,Random,Unknown,N/A,Famous,210773
+Orchestral Manoeuvres in the Dark,Random,Unknown,N/A,Famous,137257
+Tramway from Verneuil-l'Étang to Melun,Random,Unknown,N/A,Famous,142581
+Kana Hanazawa,Random,Unknown,N/A,Famous,259658
+Marxism,Random,Unknown,N/A,Famous,148544
+General Dynamics F-16 Fighting Falcon operators,Random,Unknown,N/A,Famous,201494
+1975,Random,Unknown,N/A,Famous,105368
+"Listed buildings in Medway, non civil parish (Frindsbury, Rochester, Strood)",Random,Unknown,N/A,Famous,124883
+"Lionel Barrymore on stage, screen and radio",Random,Unknown,N/A,Famous,147777
+Chronology of the later Crusades through 1400,Random,Unknown,N/A,Famous,164222
+Urby Emanuelson,Random,Unknown,N/A,Famous,162766
+White Brazilians,Random,Unknown,N/A,Famous,206550
+Timeline of relief efforts after the 2010 Haiti earthquake,Random,Unknown,N/A,Famous,121304
+Joker: Folie à Deux,Random,Unknown,N/A,Famous,126970
+74th Illinois General Assembly,Random,Unknown,N/A,Famous,101715
+2011–2012 Saudi Arabian protests,Random,Unknown,N/A,Famous,104052
+2012 Seattle Sounders FC season,Random,Unknown,N/A,Famous,147698
+2016 ITF Women's Circuit (October–December),Random,Unknown,N/A,Famous,114654
+Agriculture in India,Random,Unknown,N/A,Famous,138192
+Alfred Hugenberg,Random,Unknown,N/A,Famous,117126
+Valencia (Congress of Deputies constituency),Random,Unknown,N/A,Famous,116241
+2014–15 UEFA Europa League group stage,Random,Unknown,N/A,Famous,139765
+Metropolitan Atlanta Rapid Transit Authority,Random,Unknown,N/A,Famous,101480
+Text messaging,Random,Unknown,N/A,Famous,160878
+Timeline of ichthyosaur research,Random,Unknown,N/A,Famous,121422
+Hurricane Willa,Random,Unknown,N/A,Famous,109256
+Nancy Pelosi,Random,Unknown,N/A,Famous,166376
+Race (human categorization),Random,Unknown,N/A,Famous,216133
+1976 United States presidential election in Texas,Random,Unknown,N/A,Famous,130025
+2024 IHF Women's U18 Handball World Championship squads,Random,Unknown,N/A,Famous,119329
+Opinion polling for the 2024 Portuguese legislative election,Random,Unknown,N/A,Famous,123319
+Afghanistan national cricket team,Random,Unknown,N/A,Famous,118074
+Sportswashing,Random,Unknown,N/A,Famous,130714
+History of banking,Random,Unknown,N/A,Famous,136268
+Tim Walz,Random,Unknown,N/A,Famous,234908
+2018 Maine House of Representatives election,Random,Unknown,N/A,Famous,167197
+Architecture of Wales,Random,Unknown,N/A,Famous,172293
+Jainism,Random,Unknown,N/A,Famous,174043
+Arson damage during the George Floyd protests in Minneapolis–Saint Paul,Random,Unknown,N/A,Famous,140325
+Space dust measurement,Random,Unknown,N/A,Famous,101257
+Belgrade,Random,Unknown,N/A,Famous,222306
+Geography of the United Arab Emirates,Random,Unknown,N/A,Medium,23855
+Zeila,Random,Unknown,N/A,Medium,65479
+Archdiocese of Miami,Random,Unknown,N/A,Medium,41294
+Arizona's Family Sports,Random,Unknown,N/A,Medium,29550
+Nelson and Colne,Random,Unknown,N/A,Medium,22161
+Freedom of religion in Austria,Random,Unknown,N/A,Medium,26627
+Finance and Expenditure Committee,Random,Unknown,N/A,Medium,26628
+English folklore,Random,Unknown,N/A,Medium,49993
+Heath Streak,Random,Unknown,N/A,Medium,41686
+Dené–Caucasian languages,Random,Unknown,N/A,Medium,26207
+Dennis Dart,Random,Unknown,N/A,Medium,23118
+Atlassian,Random,Unknown,N/A,Medium,43463
+"Alton, Kansas",Random,Unknown,N/A,Medium,20087
+Mukachevo,Random,Unknown,N/A,Medium,34703
+Japan national badminton team,Random,Unknown,N/A,Medium,57701
+2022 Toronto FC II season,Random,Unknown,N/A,Medium,43869
+Elision,Random,Unknown,N/A,Medium,33325
+Pevensey,Random,Unknown,N/A,Medium,21813
+2011–12 Crawley Town F.C. season,Random,Unknown,N/A,Medium,62561
+2023–24 FC Nantes season,Random,Unknown,N/A,Medium,38733
+John Paul Jones Memorial,Random,Unknown,N/A,Medium,21259
+Tasmanian State Premiership,Random,Unknown,N/A,Medium,23974
+2011 Stanley Cup Final,Random,Unknown,N/A,Medium,78345
+34th Parliament of British Columbia,Random,Unknown,N/A,Medium,20097
+Jeff Roorda,Random,Unknown,N/A,Medium,22324
+Jaime Mata,Random,Unknown,N/A,Medium,20707
+Censorship by Facebook,Random,Unknown,N/A,Medium,36883
+Lea Salonga on screen and stage,Random,Unknown,N/A,Medium,48074
+Hugh Greenwood,Random,Unknown,N/A,Medium,28304
+Philadelphia Athletics (minor league),Random,Unknown,N/A,Medium,30047
+Zuko,Random,Unknown,N/A,Medium,34219
+1821 United States House of Representatives elections in New York,Random,Unknown,N/A,Medium,24650
+2018 BWF World Junior Championships – Mixed doubles,Random,Unknown,N/A,Medium,45344
+2020 Pan American Cross Country Cup,Random,Unknown,N/A,Medium,27432
+2022–23 AHL season,Random,Unknown,N/A,Medium,35410
+Sleep hygiene,Random,Unknown,N/A,Medium,33462
+Sawndip,Random,Unknown,N/A,Medium,29222
+Arthur Pieck,Random,Unknown,N/A,Medium,23021
+Malaysian English,Random,Unknown,N/A,Medium,24379
+Handedness,Random,Unknown,N/A,Medium,85702
+Bronze Soldier of Tallinn,Random,Unknown,N/A,Medium,28665
+Bree Hamilton,Random,Unknown,N/A,Medium,23988
+Central Committee of the 16th Congress of the All-Union Communist Party (Bolsheviks),Random,Unknown,N/A,Medium,98237
+! (Trippie Redd album),Random,Unknown,N/A,Medium,28770
+Holby City episode 1102,Random,Unknown,N/A,Medium,45447
+Lukoil,Random,Unknown,N/A,Medium,74395
+2011 AFL Grand Final,Random,Unknown,N/A,Medium,35590
+Austria national football team results (1930–1959),Random,Unknown,N/A,Medium,79471
+Mal de debarquement,Random,Unknown,N/A,Medium,24653
+Rochdale College,Random,Unknown,N/A,Medium,28665
+"La Calera, Cundinamarca",Random,Unknown,N/A,Medium,20640
+Timeline of Croatian history,Random,Unknown,N/A,Medium,84290
+2008 San Jose Earthquakes season,Random,Unknown,N/A,Medium,21362
+1972 United States presidential election in Washington (state),Random,Unknown,N/A,Medium,28326
+Augustus II the Strong,Random,Unknown,N/A,Medium,36535
+The Real World: Philadelphia,Random,Unknown,N/A,Medium,40711
+Jeremiah Curtin,Random,Unknown,N/A,Medium,26768
+Bibliothèques Sans Frontières,Random,Unknown,N/A,Medium,21723
+Nam Gyu-ri,Random,Unknown,N/A,Medium,30961
+Wat Ong Teu Mahawihan,Random,Unknown,N/A,Medium,21895
+José Ureña,Random,Unknown,N/A,Medium,33205
+John H. Newton,Random,Unknown,N/A,Medium,24470
+Ghent University Museum,Random,Unknown,N/A,Medium,22755
+1979 Japan Open Tennis Championships – Men's singles,Random,Unknown,N/A,Medium,20366
+Frank Olson,Random,Unknown,N/A,Medium,36940
+Treehouse of Horror (The Simpsons episode),Random,Unknown,N/A,Medium,25630
+Froidchapelle,Random,Unknown,N/A,Long-tail,2059
+Kristijonas Donelaitis,Random,Unknown,N/A,Long-tail,10283
+RISC Single Chip,Random,Unknown,N/A,Long-tail,4555
+Bromsgrove railway works,Random,Unknown,N/A,Long-tail,3935
+Siege of Mount Hiei,Random,Unknown,N/A,Long-tail,11128
+Smokestack Lightning,Random,Unknown,N/A,Long-tail,10263
+Find Myself in You,Random,Unknown,N/A,Long-tail,2890
+Prolidase deficiency,Random,Unknown,N/A,Long-tail,11369
+Julius Leopold Pagel,Random,Unknown,N/A,Long-tail,3483
+Fresno kangaroo rat,Random,Unknown,N/A,Long-tail,7804
+Prahran and Malvern Tramways Trust,Random,Unknown,N/A,Long-tail,13134
+Mées,Random,Unknown,N/A,Long-tail,2007
+Euzois of Byzantium,Random,Unknown,N/A,Long-tail,1931
+Thierry Grégoire,Random,Unknown,N/A,Long-tail,5227
+Evangeline Downs,Random,Unknown,N/A,Long-tail,8708
+"Gullivers Cove, Nova Scotia",Random,Unknown,N/A,Long-tail,981
+Candy (Ken Hirai song),Random,Unknown,N/A,Long-tail,3958
+Naranpanawe Karagastenna,Random,Unknown,N/A,Long-tail,2185
+Isaac González Martínez,Random,Unknown,N/A,Long-tail,9775
+Vittorio Arminjon,Random,Unknown,N/A,Long-tail,2625
+Imran Amed,Random,Unknown,N/A,Long-tail,10422
+Bibliography of Copenhagen,Random,Unknown,N/A,Long-tail,9887
+Elihu Colman,Random,Unknown,N/A,Long-tail,4592
+Cabaniss Formation,Random,Unknown,N/A,Long-tail,1549
+Green Park Historic District,Random,Unknown,N/A,Long-tail,3356
+Agustina Andrade,Random,Unknown,N/A,Long-tail,5977
+Mount Sarnegor,Random,Unknown,N/A,Long-tail,2961
+Mohammad Zahid (Faisalabad cricketer),Random,Unknown,N/A,Long-tail,1581
+"Cyrus, Missouri",Random,Unknown,N/A,Long-tail,1926
+Akech (queen),Random,Unknown,N/A,Long-tail,2107
+Shima Park,Random,Unknown,N/A,Long-tail,3908
+Lygodactylus roavolana,Random,Unknown,N/A,Long-tail,997
+Gemmobacter,Random,Unknown,N/A,Long-tail,3523
+Rachel Mayberry,Random,Unknown,N/A,Long-tail,10774
+2019 World Rowing Championships – PR3 Men's coxless pair,Random,Unknown,N/A,Long-tail,5460
+Confeugo,Random,Unknown,N/A,Long-tail,8114
+"Koçkaya, Refahiye",Random,Unknown,N/A,Long-tail,1849
+Fium'Alto,Random,Unknown,N/A,Long-tail,7931
+2024 President of Ireland's Cup,Random,Unknown,N/A,Long-tail,8091
+Novius lindi,Random,Unknown,N/A,Long-tail,2574
+Stardust,Random,Unknown,N/A,Long-tail,6927
+Johannes Fritsch,Random,Unknown,N/A,Long-tail,5258
+Solicitor-General for Ireland,Random,Unknown,N/A,Long-tail,12950
+Homeoptoton,Random,Unknown,N/A,Long-tail,1331
+"Albert I, Duke of Brunswick",Random,Unknown,N/A,Long-tail,6809
+Boston College Lynch School of Education and Human Development,Random,Unknown,N/A,Long-tail,7305
+1991 All-Africa Games,Random,Unknown,N/A,Long-tail,7071
+Yuri Linnik,Random,Unknown,N/A,Long-tail,7102
+John O'Leary (Wexford politician),Random,Unknown,N/A,Long-tail,3097
+Klötze,Random,Unknown,N/A,Long-tail,5409
+Moscow International House of Music,Random,Unknown,N/A,Long-tail,8617
+Derailed (Ugly Betty),Random,Unknown,N/A,Long-tail,9245
+Rene Villanueva,Random,Unknown,N/A,Long-tail,8021
+"St. Lachtain's Church, Freshford",Random,Unknown,N/A,Long-tail,2279
+Miss Delaware's Teen,Random,Unknown,N/A,Long-tail,11424
+Edouard Wojtczak,Random,Unknown,N/A,Long-tail,3072
+Simon Önerud,Random,Unknown,N/A,Long-tail,3853
+Real... En Vivo,Random,Unknown,N/A,Long-tail,3610
+Hurtan,Random,Unknown,N/A,Long-tail,6220
+Lwów Oath,Random,Unknown,N/A,Long-tail,5514
+Adam Falk,Random,Unknown,N/A,Long-tail,4976
+Pachypodium gracilius,Random,Unknown,N/A,Long-tail,1011
+Tommaso dei Cavalieri,Random,Unknown,N/A,Long-tail,18492
+Atuagkat Bookstore,Random,Unknown,N/A,Long-tail,6240
+Kista Strait,Random,Unknown,N/A,Long-tail,800
+Tom Moosmayer,Random,Unknown,N/A,Long-tail,3247

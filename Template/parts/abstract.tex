@@ -1,0 +1,24 @@
+% !TeX root = ../main.tex
+\addchap*{Abstract}
+Text-to-image (T2I) models can produce visually convincing images from short
+natural-language prompts, but visual plausibility does not imply factual
+knowledge. This thesis presents a benchmark for measuring the factual knowledge
+of T2I models about real-world entities. The benchmark contains curated entities
+from four domains and randomly sampled entities divided into Famous, Medium, and
+Long-tail popularity tiers. Each entity is rendered from the same zero-context
+prompt, ``An image of [entity].'' Images are evaluated with a blind visual
+question-answering pipeline. The evaluation measures whether the model depicts
+the correct entity type, whether it includes a distinctive descriptive feature,
+and how many atomic visual propositions are hallucinated when compared with a
+Wikipedia lead summary.
+
+Three image-generation models are compared: GPT Image 2, FLUX.2-dev, and
+FLUX.2-klein-4B. The final dataset contains 885 successful evaluations. On the
+common set of 289 entities, GPT Image 2 reaches the lowest overall hallucination
+rate, while FLUX.2-klein-4B produces the highest rate. For curated entities, the
+best type-match rate is obtained by FLUX.2-dev, whereas GPT Image 2 performs best
+on distinctive feature presence. Hallucination rates vary strongly by popularity
+tier, with Long-tail entities generally producing fewer visual propositions and
+more unsupported facts. The results show that T2I models contain measurable,
+domain-dependent factual knowledge, but that their outputs should not be treated
+as reliable factual representations without explicit verification.

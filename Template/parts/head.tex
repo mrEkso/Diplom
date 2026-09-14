@@ -1,0 +1,111 @@
+% !TeX root = ../main.tex
+\documentclass[
+	paper = a4,
+	BCOR=5mm, 			% BCOR je nach Seitenzahl setzen
+%	ngerman, english,	% Give every language used in the document, the main one as last
+	ngerman, english,
+	twoside,
+	numbers=noenddot,
+	parskip	= half, 	% separate paragraphs with half a line
+	cdgeometry = symmetric,
+	cd = barcolor,
+	chapterpage	= false,
+	cdmath = false,
+	slantedgreek=standard,
+	captions=tableheading
+]{tudscrbook}
+
+\usepackage{tudscrsupervisor} % script for creating the task description
+\usepackage{tudscrcolor}
+
+\usepackage{hyperref}
+\hypersetup{hypertexnames=false}
+\usepackage{times}
+\usepackage{latexsym}
+\usepackage{booktabs}
+\usepackage{nicematrix}
+\usepackage{array}
+\usepackage{enumitem}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{microtype}
+\usepackage{inconsolata}
+\usepackage{graphicx}
+\usepackage{arydshln} % For dashed lines
+\usepackage{pgf-pie}
+\usepackage{pifont}
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.18} 
+\usepackage{xurl}
+\usepackage{xcolor}
+\usepackage{amssymb}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+\usepackage{amsmath}
+\usepackage{lineno}
+\emergencystretch=2em
+
+\renewcommand{\algorithmicrequire}{\textbf{Input:}}
+\renewcommand{\algorithmicensure}{\textbf{Output:}}
+\newcommand{\ourkb}{\mbox{\textsc{GPTKB}}}
+\newcommand{\website}{\url{https://gptkb.org}}
+
+
+\newcommand{\instance}[1]{\textit{#1}}
+
+\definecolor{gg-red}{RGB}{234,67,53}
+\definecolor{gg-blue}{RGB}{66,133,244}
+\definecolor{gg-yellow}{RGB}{251,188,4}
+\definecolor{gg-green}{RGB}{52,168,83}
+\definecolor{gg-orange}{RGB}{255,109,1}
+\definecolor{gg-teal}{RGB}{70,189,198}
+
+\title{title}
+\author{author}
+\usepackage[round,authoryear]{natbib}
+\RedeclareSectionCommand[beforeskip=1cm,afterskip=2cm]{chapter}
+
+\begin{document}
+% Uncomment the following line for the final version!
+\linenumbers
+
+\frontmatter
+
+\faculty{Faculty of Computer Science }
+\institute{Institute for Artificial Intelligence \phantom{Push the institute name below the line. Need some more characters.}}
+\chair{Chair of Knowledge-aware Artificial Intelligence \phantom{Push the chair name on then next line.}}
+\headlogo{logo/KAAI-logo-extended.png}
+
+\newcommand*{\Title}{Measuring Factual Knowledge in Text-to-Image Models}
+\newcommand*{\Author}{Davyd Okaianchenko}
+
+\date{\today}
+\title{\Title}
+\author{\Author}
+\dateofbirth{09.10.2004}
+\placeofbirth{Poltawa, Ukraine}
+\matriculationnumber{5196798}
+
+% This is a Bachelor's thesis (BSc), see p.38 of the tudscr docs for all options:
+% https://ftp.tu-chemnitz.de/pub/tex/macros/latex/contrib/tudscr/doc/tudscr.pdf
+\subject{bachelor}
+\graduation[B.Sc.]{Bachelor of Science}
+% TODO: confirm exact supervisor/referee names with Simon
+\supervisor{Simon Razniewski}
+\referee{Prof. Dr. Simon Razniewski \and Prof. Dr. Martin Weigert}
+
+\maketitle
+
+% Change properties for all other pages that use a these information. No institute to avoid three lines and a black instead of a blue logo.
+\faculty{Faculty of Computer Science}
+\institute{}
+\chair{Chair of Knowledge-aware Artificial Intelligence}
+\headlogo{logo/logo-scads.png}
+
+\TUDoption{declaration}{notoc,chapter}
+\begin{declarations}
+\confirmation
+\end{declarations}
+\cleardoublepage
+
+\mainmatter
