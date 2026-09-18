@@ -1,4 +1,4 @@
-Model,Avg_Correct_Facts_Per_Random_Entity,Projected_Known_Facts_Across_Wikipedia
-gpt_image_2,6.10012190934066,42700853.36538462
-scads_flux2_dev,6.024090909090909,42168636.36363637
-scads_flux2_klein,5.996363636363637,41974545.45454546
+Model,Extrapolation_Method,Avg_Correct_Facts_Per_Entity,Projected_Known_Facts_Across_Wikipedia,Extrapolation_Set
+gpt_image_2,reweighted_wikipedia,6.022405921855922,43588529.9455765,available-case
+scads_flux2_dev,reweighted_wikipedia,5.987454545454546,43335561.42490909,available-case
+scads_flux2_klein,reweighted_wikipedia,5.979154545454546,43275488.290809095,available-case

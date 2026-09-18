@@ -1,10 +1,4 @@
-Popularity_Tier,Model,Avg_Hallucinations,Avg_Propositions,N,Projected_Articles_In_Tier
-Famous,gpt_image_2,0.25,8.328125,64,2333333.333333333
-Famous,scads_flux2_dev,0.803030303030303,7.575757575757576,66,2333333.333333333
-Famous,scads_flux2_klein,1.7272727272727273,7.7727272727272725,66,2333333.333333333
-Long-tail,gpt_image_2,1.7692307692307692,7.6923076923076925,65,2333333.333333333
-Long-tail,scads_flux2_dev,1.0,6.9393939393939394,66,2333333.333333333
-Long-tail,scads_flux2_klein,1.5606060606060606,7.515151515151516,66,2333333.333333333
-Medium,gpt_image_2,0.6031746031746031,8.253968253968255,63,2333333.333333333
-Medium,scads_flux2_dev,0.5606060606060606,7.348484848484849,66,2333333.333333333
-Medium,scads_flux2_klein,1.3181818181818181,7.7272727272727275,66,2333333.333333333
+Model,Extrapolation_Method,Avg_Correct_Facts_Per_Entity,Projected_Known_Facts_Across_Wikipedia,Extrapolation_Set
+gpt_image_2,naive_equal_tier,7.217331857956858,52237077.65629452,available-case
+scads_flux2_dev,naive_equal_tier,6.5,47045225.5,available-case
+scads_flux2_klein,naive_equal_tier,6.136363636363636,44413324.772727266,available-case

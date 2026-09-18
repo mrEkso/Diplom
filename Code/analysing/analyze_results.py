@@ -28,6 +28,8 @@ Usage:
 
 import argparse
 import ast
+import math
+from itertools import combinations
 from pathlib import Path
 
 import matplotlib
@@ -38,19 +40,49 @@ import pandas as pd
 
 # Build default paths from this file's location, so the command works from any folder.
 BASE_DIR = Path(__file__).resolve().parent
-DEFAULT_RESULTS_CSV = str(BASE_DIR.parent / "evaluation" / "evaluation_results.csv")
+DEFAULT_RESULTS_CSV = str(BASE_DIR.parent / "evaluation" / "evaluation_results_gemma-4-31B-it.csv")
 DEFAULT_FAILURES_CSV = str(BASE_DIR.parent / "generation" / "generation_failures.csv")
 DEFAULT_ENTITIES_CSV = str(BASE_DIR.parent / "entities" / "benchmark_entities_final.csv")
 OUT_DIR = BASE_DIR / "analysis_output"
 
 # This equal weighting describes the benchmark sample, not real Wikipedia.
-# The output using it is deliberately marked as caveated.
-WIKIPEDIA_TOTAL_ARTICLES = 7_000_000
+# The output using it is deliberately marked as caveated and intentionally uses the
+# same fact-count metric as the reweighted projection for fair comparison.
+WIKIPEDIA_TOTAL_ARTICLES = 7_237_727
 EXTRAPOLATION_TIER_WEIGHTS = {"Famous": 1 / 3, "Medium": 1 / 3, "Long-tail": 1 / 3}
 
-# Approximate real-world proportions used for the final reweighted table.
-REAL_WIKIPEDIA_TIER_WEIGHTS = {"Famous": 0.01, "Medium": 0.09, "Long-tail": 0.90}
+# Real-world proportions used for the final reweighted table. These values are
+# derived from the Wikipedia article distribution (Famous, Medium, Long-tail).
+REAL_WIKIPEDIA_TIER_WEIGHTS = {"Famous": 0.0032, "Medium": 0.0535, "Long-tail": 0.9433}
 TIER_ORDER = ["Famous", "Medium", "Long-tail"]
+
+
+def wilson_interval(successes, trials, z=1.96):
+    """Return a 95% Wilson interval for a binomial proportion."""
+    if trials == 0:
+        return float("nan"), float("nan")
+    proportion = successes / trials
+    denominator = 1 + z**2 / trials
+    centre = (proportion + z**2 / (2 * trials)) / denominator
+    margin = z * math.sqrt(
+        proportion * (1 - proportion) / trials + z**2 / (4 * trials**2)
+    ) / denominator
+    return centre - margin, centre + margin
+
+
+def two_proportion_z_test(successes_a, trials_a, successes_b, trials_b):
+    """Return z and two-sided normal-approximation p for two proportions."""
+    proportion_a = successes_a / trials_a
+    proportion_b = successes_b / trials_b
+    pooled = (successes_a + successes_b) / (trials_a + trials_b)
+    standard_error = math.sqrt(
+        pooled * (1 - pooled) * (1 / trials_a + 1 / trials_b)
+    )
+    if standard_error == 0:
+        return float("nan"), float("nan")
+    z_score = (proportion_a - proportion_b) / standard_error
+    p_value = math.erfc(abs(z_score) / math.sqrt(2))
+    return z_score, p_value
 
 
 def summarize(df):
@@ -126,11 +158,24 @@ def compute_tables(df, rq1_df, rq2_df, failures_csv, entities_csv):
     )
     rq3_tier.to_csv(OUT_DIR / "rq3_hallucinations_by_tier_model.csv", index=False)
 
-    # Project the equal-count benchmark tiers across Wikipedia for illustration only.
+    # Project the equal-count benchmark tiers across Wikipedia for illustration only,
+    # using the same fact-count metric as the reweighted estimate so the tables are directly comparable.
     extrap = rq3_tier.copy()
-    tier_weight = extrap["Popularity_Tier"].map(EXTRAPOLATION_TIER_WEIGHTS)
-    extrap["Projected_Articles_In_Tier"] = tier_weight * WIKIPEDIA_TOTAL_ARTICLES
-    extrap.to_csv(OUT_DIR / "rq3_extrapolation_CAVEATED.csv", index=False)
+    extrap["Avg_Correct_Facts"] = (extrap["Avg_Propositions"] - extrap["Avg_Hallucinations"]).clip(lower=0)
+    naive_rows = []
+    for model, g in extrap.groupby("Model"):
+        weights = g["Popularity_Tier"].map(EXTRAPOLATION_TIER_WEIGHTS)
+        avg_correct = (g["Avg_Correct_Facts"] * weights).sum() / weights.sum()
+        naive_rows.append(
+            {
+                "Model": model,
+                "Extrapolation_Method": "naive_equal_tier",
+                "Avg_Correct_Facts_Per_Entity": avg_correct,
+                "Projected_Known_Facts_Across_Wikipedia": avg_correct * WIKIPEDIA_TOTAL_ARTICLES,
+                "Extrapolation_Set": "available-case",
+            }
+        )
+    pd.DataFrame(naive_rows).to_csv(OUT_DIR / "rq3_extrapolation_CAVEATED.csv", index=False)
 
     if Path(failures_csv).exists():
         fail_df = pd.read_csv(failures_csv)
@@ -200,25 +245,76 @@ def compute_fair_comparison(df, entities_csv):
     rows = []
     for model, group in fair_df.groupby("Model"):
         rq_group = rq_df[rq_df["Model"] == model]
+        rq1_successes = int(rq_group["RQ1_Type_Match"].sum())
+        rq2_group = rq_group[rq_group["RQ2_Feature_Present"].notna()]
+        rq2_successes = int(rq2_group["RQ2_Feature_Present"].sum())
+        proposition_counts = group["RQ3_Propositions"].apply(_count_propositions)
+        total_propositions = int(proposition_counts.sum())
+        total_hallucinations = int(group["RQ3_Hallucinations_Count"].sum())
+        rq1_lower, rq1_upper = wilson_interval(rq1_successes, len(rq_group))
+        rq2_lower, rq2_upper = wilson_interval(rq2_successes, len(rq2_group))
+        rq3_lower, rq3_upper = wilson_interval(
+            total_hallucinations, total_propositions
+        )
         rows.append(
             {
                 "Model": model,
                 "Common_Entities": len(common_entities),
                 "RQ1_N": len(rq_group),
+                "RQ1_Successes": rq1_successes,
                 "RQ1_Type_Match_Rate": rq_group["RQ1_Type_Match"].mean(),
+                "RQ1_Wilson_Lower": rq1_lower,
+                "RQ1_Wilson_Upper": rq1_upper,
                 "RQ2_N": rq_group["RQ2_Feature_Present"].notna().sum(),
+                "RQ2_Successes": rq2_successes,
                 "RQ2_Feature_Present_Rate": rq_group["RQ2_Feature_Present"].mean(),
+                "RQ2_Wilson_Lower": rq2_lower,
+                "RQ2_Wilson_Upper": rq2_upper,
                 "RQ3_N": len(group),
+                "RQ3_Total_Propositions": total_propositions,
+                "RQ3_Total_Hallucinations": total_hallucinations,
                 "RQ3_Avg_Hallucinations": group["RQ3_Hallucinations_Count"].mean(),
                 "RQ3_Avg_Propositions": group["N_Propositions"].mean()
                 if "N_Propositions" in group
                 else group["RQ3_Propositions"].apply(_count_propositions).mean(),
                 "RQ3_Hallucination_Rate": group["RQ3_Hallucinations_Count"].sum()
                 / group["RQ3_Propositions"].apply(_count_propositions).sum(),
+                "RQ3_Wilson_Lower": rq3_lower,
+                "RQ3_Wilson_Upper": rq3_upper,
             }
         )
     fair_summary = pd.DataFrame(rows)
     fair_summary.to_csv(OUT_DIR / "fair_comparison_overall.csv", index=False)
+
+    tests = []
+    model_labels = {
+        "gpt_image_2": "GPT Image 2",
+        "scads_flux2_dev": "FLUX.2-dev",
+        "scads_flux2_klein": "FLUX.2-klein-4B",
+    }
+    available_models = sorted(fair_summary["Model"].unique())
+    for metric, success_column, n_column in [
+        ("RQ1_Type_Match", "RQ1_Successes", "RQ1_N"),
+        ("RQ2_Feature_Present", "RQ2_Successes", "RQ2_N"),
+    ]:
+        for model_a, model_b in combinations(available_models, 2):
+            row_a = fair_summary[fair_summary["Model"] == model_a].iloc[0]
+            row_b = fair_summary[fair_summary["Model"] == model_b].iloc[0]
+            z_score, p_value = two_proportion_z_test(
+                int(row_a[success_column]), int(row_a[n_column]),
+                int(row_b[success_column]), int(row_b[n_column]),
+            )
+            tests.append(
+                {
+                    "Comparison": f"{model_labels[model_a]} vs {model_labels[model_b]}",
+                    "Metric": metric,
+                    "Z": z_score,
+                    "P_Two_Sided": p_value,
+                    "Significant_At_0.05": p_value < 0.05,
+                }
+            )
+    pd.DataFrame(tests).to_csv(OUT_DIR / "fair_statistical_tests.csv", index=False)
+    print("Pairwise two-proportion tests:\n", pd.DataFrame(tests), "\n")
 
     fair_by_category = (
         fair_df.groupby(["Category", "Model"])
@@ -257,6 +353,15 @@ def compute_fact_analysis(df, output_suffix=""):
     by_tier["Hallucination_Rate"] = (
         by_tier["Total_Hallucinations"] / by_tier["Total_Propositions"]
     )
+    intervals = by_tier.apply(
+        lambda row: wilson_interval(
+            int(row["Total_Propositions"] - row["Total_Hallucinations"]),
+            int(row["Total_Propositions"]),
+        ),
+        axis=1,
+    )
+    by_tier["Hallucination_Wilson_Lower"] = [1 - item[1] for item in intervals]
+    by_tier["Hallucination_Wilson_Upper"] = [1 - item[0] for item in intervals]
     by_tier.to_csv(OUT_DIR / f"rq3_fact_generation_by_tier_model{output_suffix}.csv", index=False)
 
     correlations = []
@@ -285,7 +390,7 @@ def compute_fact_analysis(df, output_suffix=""):
     plt.tight_layout()
     plt.savefig(OUT_DIR / f"rq3_average_facts_by_tier{output_suffix}.png", dpi=150)
     plt.close()
-    return fact_df
+    return by_tier
 
 
 def write_limitations(df, fair_df, failures_csv, entities_csv):
@@ -301,7 +406,7 @@ def write_limitations(df, fair_df, failures_csv, entities_csv):
 - Fair model comparisons use the {fair_df["Entity"].nunique()} entities available for every model. RQ1 and RQ2 use only the common curated subset; Random-tier rows are excluded because their reference type and feature are undefined.
 - Hallucination rate depends on how many propositions a model generates. Proposition-count tables and correlations are therefore reported alongside the raw hallucination counts; a high or low rate should not be interpreted independently of verbosity.
 - Wikipedia lead summaries are the factual reference, so they may omit visible details. This is a limitation of the evaluation ground truth, not evidence that every unmentioned visual detail is objectively false.
-- The reweighted Wikipedia extrapolation is illustrative only and should not be presented as a measured count of facts known by a model across Wikipedia.
+- The reweighted Wikipedia extrapolation is illustrative only and should not be presented as a measured count of facts known by a model across Wikipedia. It is computed on the available-case per-model coverage and is therefore not a fair-set estimate; the fair comparison uses the common entity subset instead.
 """
     (OUT_DIR / "limitations.md").write_text(text, encoding="utf-8")
 
@@ -355,15 +460,18 @@ def compute_hallucination_rate(df):
 def compute_reweighted_extrapolation(rq3_tier):
     """Reweight correct facts using approximate real Wikipedia tier proportions.
 
-    The benchmark deliberately has equal tier sizes, so this correction prevents
-    the final illustration from treating Famous, Medium, and Long-tail topics as
-    equally common in Wikipedia.
+    This projection uses the available-case model coverage and should be read as an
+    illustrative population-level scaling exercise, not as a fair-set estimate.
+    The underlying benchmark sample is deliberately tier-balanced, so this correction
+    prevents Famous, Medium, and Long-tail topics from being treated as equally
+    common in English Wikipedia.
     """
     rq3_tier = rq3_tier.copy()
     # A proposition is counted as correct when it is not classified as a hallucination.
     rq3_tier["Avg_Correct_Facts"] = (rq3_tier["Avg_Propositions"] - rq3_tier["Avg_Hallucinations"]).clip(lower=0)
 
-    # Build one projected summary row for every model.
+    # Build one projected summary row for every model, using the same "total known facts"
+    # metric as the naive extrapolation so the two estimates remain directly comparable.
     rows = []
     for model, g in rq3_tier.groupby("Model"):
         weights = g["Popularity_Tier"].map(REAL_WIKIPEDIA_TIER_WEIGHTS)
@@ -371,8 +479,10 @@ def compute_reweighted_extrapolation(rq3_tier):
         rows.append(
             {
                 "Model": model,
-                "Avg_Correct_Facts_Per_Random_Entity": avg_correct_facts,
+                "Extrapolation_Method": "reweighted_wikipedia",
+                "Avg_Correct_Facts_Per_Entity": avg_correct_facts,
                 "Projected_Known_Facts_Across_Wikipedia": avg_correct_facts * WIKIPEDIA_TOTAL_ARTICLES,
+                "Extrapolation_Set": "available-case",
             }
         )
     reweighted = pd.DataFrame(rows)
@@ -397,13 +507,14 @@ def plot_grouped_bar(table, value_col, category_col, title, ylabel, out_name):
 
 
 def plot_hallucination_tax_line(rq3_tier):
-    """Save a line chart showing how hallucinations change across popularity tiers."""
-    pivot = rq3_tier.pivot(index="Popularity_Tier", columns="Model", values="Avg_Hallucinations")
+    """Save a line chart showing normalized hallucination rates by tier."""
+    pivot = rq3_tier.pivot(index="Popularity_Tier", columns="Model", values="Hallucination_Rate")
     pivot = pivot.reindex(TIER_ORDER)
     ax = pivot.plot(kind="line", marker="o", figsize=(9, 5))
-    ax.set_title("Factuality Tax: Hallucinations by Entity Popularity Tier")
-    ax.set_ylabel("Avg. hallucinations per image")
+    ax.set_title("Hallucination Rate by Entity Popularity Tier")
+    ax.set_ylabel("Hallucination rate")
     ax.set_xlabel("Popularity tier")
+    ax.set_ylim(0, 0.30)
     ax.legend(title="Model")
     plt.tight_layout()
     plt.savefig(OUT_DIR / "rq3_hallucination_tax_by_tier.png", dpi=150)
@@ -435,7 +546,7 @@ def main():
     compute_reweighted_extrapolation(rq3_tier)
     fair_df, _ = compute_fair_comparison(df, args.entities_csv)
     compute_fact_analysis(df)
-    compute_fact_analysis(fair_df, "_fair")
+    fair_fact_by_tier = compute_fact_analysis(fair_df, "_fair")
     write_limitations(df, fair_df, args.failures_csv, args.entities_csv)
 
     plot_grouped_bar(
@@ -448,7 +559,7 @@ def main():
         "RQ2: Descriptive Feature Presence by Category", "Feature present rate",
         "rq2_feature_present_by_category.png",
     )
-    plot_hallucination_tax_line(rq3_tier)
+    plot_hallucination_tax_line(fair_fact_by_tier)
     print(f"Charts written to {OUT_DIR}/")
 
 
