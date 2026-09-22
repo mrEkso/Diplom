@@ -17,54 +17,90 @@ object can therefore turn a visually attractive image into misleading
 information.
 
 \section{Motivation}
+\label{sec:motivation}
 
-This thesis studies factual knowledge in T2I models. It builds on the scalable knowledge-base illustration pipeline
-developed by Brinster~\citep{brinster2025}, but changes the objective from
-illustrating a large knowledge base to measuring what image-generation models
-know about individual entities. The benchmark uses identical zero-context
-prompts for all models, preventing the prompt from providing the facts being
-measured. Here, a zero-context prompt means that the model receives only the
-entity name and no Wikipedia text, feature hints, or additional descriptive
-context.
+The problem becomes pressing when images are generated automatically for many
+entities at once. \citet{brinster2025} built such a pipeline: it
+illustrates the entities of a large knowledge base with images from generative
+vision models. A pipeline of this kind is only useful if the image generator
+knows the entities it is asked to draw. This thesis therefore examines this
+precondition and measures what image-generation models know about individual
+entities.
 
-A core methodological difference between language and image generation is the
-obligation to produce a result. Large language models can often decline to answer
-or explicitly state that they lack sufficient knowledge; an LLM may say "I do
-not know" or ask for clarification. Text-to-image models do not have an
-analogous abstention channel. Once a pixel grid is initialized, the network must
-fill that grid with some visual content. This makes visual hallucinations both
-more dangerous and more revealing: a model can produce a polished but false
-image without any explicit acknowledgment that it is inventing the content.
+Measuring this is harder for an image generator than for a large language
+model (LLM). An LLM can be asked questions about an entity, and when it does
+not know the answer, it can say so. A text-to-image model has no such option:
+it always returns an image, and a model that does not know an entity still
+produces a polished picture of something, without signalling that it has
+guessed. What such a model knows can therefore only be read off the images it
+produces.
+
+For the images to reflect the model's own knowledge, the prompt must not
+supply the facts that are being measured. All models in this thesis receive
+the same minimal prompt, ``An image of [entity].'', which contains only the
+entity name. Such a prompt is called \emph{zero-context} here: it
+contains no Wikipedia text, no hints about the entity's appearance, and no
+other description. Every correct detail in the image must come from what the
+model learned during training.
+
 
 \section{Problem Statement}
 
-The problem is therefore not whether a model can generate a visually convincing
-image, but whether it can generate a factually grounded image for a specific
-entity. A model may match the generic category while failing to represent the
-entity's distinctive visual attributes. In the same way, a model may invent
-contextual details that are not supported by the reference description and still
-produce an aesthetically coherent result.
+The central question of this thesis is thus not whether a model can
+produce a convincing image, but whether the image is correct for the specific
+entity it was asked to show. The thesis examines this question for three
+current models: GPT Image 2 by OpenAI and two models of the FLUX.2 family by
+Black Forest Labs, the large FLUX.2-dev and the much smaller FLUX.2-klein-4B.
+The following example shows how far a convincing image and a correct one can
+diverge.
 
-The following example illustrates the issue directly. Figure~\ref{fig:problem-example}
-shows a realistic image of Dennis Dart, but the output is factually incorrect in
-its key visual claim: it depicts a generic bus-like object rather than the named
-bus model described by the reference summary. The image looks plausible at a
-glance, yet it fails the benchmark's proposition-level factuality check.
+Figure~\ref{fig:problem-example} shows the three images generated for the
+entity \emph{Dennis Dart}. Readers outside the United Kingdom will rarely know
+this name, which is what makes it a useful example. The Dennis Dart is a
+single-decker midibus chassis built by the British manufacturer Dennis from
+1989 onwards; more than 12,600 were produced, most of them for British bus
+operators~\citep{wikidennisdart}. A correct image therefore shows a short
+single-deck bus, typically in the colours of a British operator. The name itself
+gives no hint of this: ``Dennis'' is a common first name and a ``dart'' is a
+small throwing object. A model that does not know the entity has to guess from
+these two words.
+
+The three models guess differently. GPT Image 2 draws a single-deck bus with
+``DENNIS Dart'' written on the front and the logo of the British operator First.
+FLUX.2-dev draws a red and grey hand-held device on a wooden floor, with
+``Dennis Dart'' as a heading above a line of unreadable pseudo-text.
+FLUX.2-klein-4B draws a portrait of a smiling grey-haired man, reading
+``Dennis'' as a person's name. Both FLUX images are sharp and photorealistic; a
+reader who does not know what a Dennis Dart is cannot tell that they are wrong.
 
 \begin{figure}[t]
 \centering
-\includegraphics[width=0.55\linewidth]{../Code/generation/generated_images/scads_flux2_dev/Random_Medium/Dennis_Dart.png}
-\caption{A visually plausible but factually incorrect generation: the image looks
-credible at a glance, yet it does not satisfy the reference-grounded checks for
-Dennis Dart.}
+\begin{minipage}{0.32\textwidth}\centering
+\includegraphics[width=\linewidth]{../Code/generation/generated_images/gpt_image_2/Random_Medium/Dennis_Dart.png}\\
+\small (a) GPT Image 2
+\end{minipage}\hfill
+\begin{minipage}{0.32\textwidth}\centering
+\includegraphics[width=\linewidth]{../Code/generation/generated_images/scads_flux2_dev/Random_Medium/Dennis_Dart.png}\\
+\small (b) FLUX.2-dev
+\end{minipage}\hfill
+\begin{minipage}{0.32\textwidth}\centering
+\includegraphics[width=\linewidth]{../Code/generation/generated_images/scads_flux2_klein/Random_Medium/Dennis_Dart.png}\\
+\small (c) FLUX.2-klein-4B
+\end{minipage}
+\caption{Images generated from the prompt ``An image of Dennis Dart.''}
 \label{fig:problem-example}
 \end{figure}
 
-This is the central challenge studied in this thesis: the model is rewarded for
-producing a plausible image, while the benchmark asks whether the image contains
-facts that are actually supported by the entity's description.
+The example shows that an image can go wrong at different levels. It can show
+the wrong kind of object, as the device and the portrait do. It can show the
+right kind of object without the details that make it this particular entity,
+such as a generic city bus instead of a small single-deck bus. And it can
+contain details that are simply false. Because a convincing appearance hides
+all three kinds of error, the images have to be checked systematically. This
+thesis does so along the following research questions.
 
 \section{Research Questions}
+\label{sec:rqs}
 
 The thesis addresses three research questions:
 
@@ -77,220 +113,270 @@ features that distinguish them from related entities?
 many are true?
 \end{description}
 
-RQ1 measures coarse entity recognition. RQ2 tests whether the image contains a
-feature more informative than a generic category label. RQ3 evaluates factuality
-at proposition level and accounts for the fact that models may produce different
-numbers of visual claims per image.
+All three questions are answered with the same procedure, which
+Chapter~\ref{chap:methodology} describes in detail. Each model generates one
+image per entity from the zero-context prompt. A vision-language model (VLM),
+called the \emph{judge} in this thesis, then describes each image without
+being told which entity it is supposed to show. Besides a short description and
+a guess of the object type, the judge writes down short, self-contained
+statements about what is visible, such as ``The vehicle is a bus'' or ``The
+sky is clear and blue''. These statements are called \emph{propositions}; they
+make the content of an image countable. In a second step, the judge compares
+its output with the introduction of the entity's English Wikipedia article,
+called the \emph{lead summary}. For RQ1 and RQ2, the comparison uses a type and
+a distinctive feature that were annotated in advance for a curated set of
+entities; for RQ3, the judge counts how many propositions the lead summary
+shows to be false.
 
 \section{Contributions}
 
-This thesis contributes a benchmark for factual knowledge in text-to-image
-models, together with a reproducible generation and evaluation pipeline. The main
-contributions are fourfold. First, it introduces a benchmark of 298 real-world
-entities, composed of a curated subset with manually annotated type and feature
-labels and a Random subset stratified by article popularity. The Random subset is
-split into three popularity tiers: Famous, Medium, and Long-tail. These tiers
-are defined from English Wikipedia article length and visibility, so the
-Long-tail tier refers to the least visible, shortest-article entities rather than
-a generic label for any obscure entity. Second, it generates a public dataset of
-images for each entity under a controlled, zero-context prompt using three T2I
-models: GPT Image 2, FLUX.2-dev, and FLUX.2-klein-4B. Third, it evaluates the
-results with a blind two-stage VLM pipeline that measures coarse type match,
-feature presence, and proposition-level factuality against a Wikipedia summary.
-Fourth, it reports the complete analysis artifacts: model coverage, missing
-safety refusals, fair-comparison tables, proposition counts, hallucination
-rates, and the derived plots used for the final conclusions.
-
-The public release therefore consists not only of the analysis code, but also of
-the generated image corpus, model evaluation results, failure records, derived
-tables, plots, and reproducibility files that support the reported findings. The
-complete release is available at
-\url{https://github.com/mrEkso/t2i-factuality-benchmark}. The plots are derived
-artifacts of the analysis pipeline rather than separate experimental inputs.
+The thesis makes four contributions.
+\begin{enumerate}
+\item A benchmark of 298 real-world entities: 100 curated entities from four
+domains, each annotated with an expected type and a distinctive visual feature,
+and 198 randomly sampled Wikipedia entities in three popularity tiers defined
+by article size.
+\item A public corpus of 885 images generated by GPT Image 2, FLUX.2-dev, and
+FLUX.2-klein-4B from the same zero-context prompt, together with a record of
+the nine prompts that OpenAI's safety system refused.
+\item A two-step evaluation in which a vision-language judge first describes
+each image without knowing the entity and then checks the resulting
+propositions against the Wikipedia lead summary, yielding type match (RQ1),
+feature presence (RQ2), and the share of false propositions (RQ3).
+\item An analysis of the results by domain and popularity, a catalogue of
+typical failure patterns, and a comparison with published estimates of the
+factual knowledge of language models.
+\end{enumerate}
+Code, images, evaluation results, and all derived tables and figures are
+available at \url{https://github.com/mrEkso/t2i-factuality-benchmark}.
 
 \section{Thesis Structure}
 
-Chapter~2 reviews T2I models, factuality evaluation, hallucinations, and
-knowledge-base illustration. Chapter~3 describes the benchmark, generation
-procedure, evaluation protocol, and metrics. Chapter~4 reports the results.
-Chapter~5 discusses the findings and limitations. Chapter~6 concludes the thesis
-and outlines future work.
+Chapter~2 reviews text-to-image models, the evaluation of visual factuality,
+hallucinations, and what is known about factual knowledge in language models.
+Chapter~3 describes the benchmark, the generation setup, the two-step
+evaluation, and the metrics. Chapter~4 reports the results and shows examples
+of good and bad generations. Chapter~5 answers the research questions, compares
+the findings with knowledge in language models, and discusses limitations.
+Chapter~6 concludes.
 
 \chapter{Related Work}
 
+This chapter places the thesis in the context of earlier work. It first
+describes how current text-to-image models work
+(Section~\ref{sec:t2i-models}) and how generated images have been used to
+illustrate knowledge bases (Section~\ref{sec:kb-illustration}). It then
+reviews how the factual correctness of generated images has been evaluated
+(Section~\ref{sec:eval-factuality}) and what is known about hallucinations and
+rare entities (Section~\ref{sec:hallucinations}). Section~\ref{sec:llm-vs-t2i}
+summarizes how the factual knowledge of language models has been measured, and
+Section~\ref{sec:positioning} compares this benchmark with the closest related
+work.
+
 \section{Text-to-Image Models}
+\label{sec:t2i-models}
 
-Diffusion models iteratively transform noise into an image. The process is
-conditioned on a text representation~\citep{rombach2022,podell2024}, and modern
-systems range from open-source checkpoints to commercial generators with safety
-filtering and service-level policy constraints. Caption quality and text
-conditioning are also important parts of the training recipe for commercial
-systems~\citep{betker2023}. These models are optimized for
-prompt alignment and visual realism, not necessarily for factual consistency
-with a specific entity.
+Most current text-to-image models build an image step by step from random
+noise. Diffusion models learn to remove the noise gradually, guided by an
+encoding of the text prompt~\citep{rombach2022,podell2024}. Rectified-flow
+models, a more recent variant, learn a straight path between noise and
+image~\citep{esser2024}. How closely the result follows the prompt depends on
+the text encoder and on the quality of the image captions used in
+training~\citep{betker2023}. The training objective rewards images that match
+their captions and look realistic; it does not reward factual correctness for
+a named entity. Whatever a model knows about an entity is therefore a
+by-product of its training data.
 
-For this reason, a high-quality image should not be treated as evidence by
-itself that the model knows the underlying entity. In this thesis, knowledge is
-operationalized more narrowly: a model receives credit only when observable
-evidence in the image passes the type, feature, and proposition checks. A
-generated image can be visually plausible
-while still omitting the entity-specific fact that makes it identifiable. The
-question is therefore not whether a model can produce a convincing picture, but
-whether it can represent the entity faithfully enough to survive a factual
-check against a reference description. This distinction is particularly important
-for historical figures, rare species, culturally specific objects, and entities
-that are easily confused with nearby categories.
+The three models studied in this thesis differ in how openly they are
+available. FLUX.2-dev and FLUX.2-klein-4B by Black Forest Labs are
+\emph{open-weight} models: their trained parameters are public, so they can be
+run on one's own hardware. Both combine a language model, which encodes the
+prompt, with a rectified-flow transformer, which generates the
+image~\citep{flux2,flux2klein}. GPT Image 2 by OpenAI is a proprietary model.
+It runs only on OpenAI's servers and can be used only through OpenAI's
+programming interface (API); its architecture and size are not
+disclosed~\citep{gptimage2}.
+
 
 \section{Knowledge Bases and Visual Representations}
+\label{sec:kb-illustration}
 
-Knowledge bases are relevant here only as a source of named entities and
-reference descriptions; this thesis does not perform knowledge-graph completion.
-Earlier work explored transforming knowledge-base triples into images for
-large-scale illustration~\citep{abuahmad2023,brinster2025}. Related benchmarks
-such as KITTEN and T2I-FactualBench instead treat knowledge-intensive entities
-as evaluation subjects~\citep{kitten2024,t2ifactualbench2025}. The present work
-follows the latter direction: a generated image is not accepted as a successful
-illustration by default, but is verified against an external reference.
+A knowledge base stores facts about entities, usually as
+subject--relation--object \emph{triples} such as (Dennis Dart, manufacturer,
+Dennis). Many entities in public knowledge bases such as Wikidata have no
+image, and earlier work has used generative models to fill this gap:
+\citet{abuahmad2023} generated images for Wikidata entities from their triples,
+and \citet{brinster2025} illustrated a knowledge base that had itself been
+extracted from a language model. In both cases, the generated image serves as
+the illustration of the entity. This thesis asks the preceding question,
+namely whether such images can be trusted. It uses Wikipedia only as a source
+of entity names and reference descriptions and does not build or complete a
+knowledge base.
+
 
 \section{Evaluating Visual Factuality}
+\label{sec:eval-factuality}
 
-Pixel-level metrics can assess image quality, but they do not determine whether
-an image depicts the correct entity or includes false attributes. CLIP-based
-similarity is useful for broad alignment and retrieval tasks~\citep{radford2021,hessel2021},
-but a high score does not guarantee that the image matches the entity's
-semantically distinctive properties. Evaluation surveys distinguish image
-quality, prompt alignment, aesthetic preference, and factual correctness as
-different objectives~\citep{hartwig2024}. HEIM and T2I-CompBench++ cover broad
-holistic and compositional behavior, whereas this thesis focuses on
-knowledge-intensive factuality~\citep{heim2024,t2icompbenchpp2024}. Recent work
-on visual question answering and fact-checking has therefore moved toward
-interpretable atomic claims~\citep{tifa2023,vq2}.
+Deciding whether a generated image can be trusted requires an evaluation of
+its content, not only of its quality. Image-quality metrics assess realism,
+and similarity scores based on CLIP, a model that maps images and texts into a
+shared representation, measure how
+well an image matches a caption~\citep{radford2021,hessel2021}. Neither checks
+whether the image shows the correct entity or contains false attributes;
+surveys treat image quality, prompt alignment, aesthetics, and factual
+correctness as separate objectives~\citep{hartwig2024}. Broad benchmarks cover
+many such aspects at once: HEIM evaluates, among others, alignment, quality,
+and bias, and T2I-CompBench++ tests whether several objects and attributes
+named in one prompt are combined correctly~\citep{heim2024,t2icompbenchpp2024}.
 
-Proposition-based evaluation addresses this gap by decomposing a visual
-description into atomic claims and checking each one against a reference. In this
-thesis, a vision-language judge performs blind description and grounded
-verification, which provides a more faithful proxy for factuality than a single
-overall image similarity score. This is consistent with the emerging literature
-on visually grounded hallucination analysis, VLM-based evaluation, and factually
-grounded image generation~\citep{gpt4v2024,ihalla2024,preventimagehallucination2024,heim2024,
-kitten2024,fager2026}. T2I-FactualBench is especially close in spirit
-because it evaluates knowledge-intensive concepts rather than only generic
-objects~\citep{t2ifactualbench2025}. While much of this literature validates
-VLM-based evaluation using large proprietary judges, the present benchmark
-deliberately substitutes a smaller open-weight judge to keep the full pipeline
-reproducible without a commercial API dependency; Section~\ref{sec:limitations}
-discusses the resulting trade-off explicitly.
 
-\subsection{How This Benchmark Differs from Prior Work}
+For prompt alignment, the field has moved from single similarity scores to
+question answering over atomic claims: TIFA and VQ$^2$ derive questions from the
+prompt and answer them with a visual question-answering (VQA) model, that is,
+a model that answers questions about an image~\citep{tifa2023,vq2}. The same idea has been applied to factuality.
+I-HallA measures factual errors in generated images with curated
+questions~\citep{ihalla2024}, T2I-FactualBench evaluates knowledge-intensive
+concepts with multi-round question answering~\citep{t2ifactualbench2025},
+KITTEN evaluates how faithfully generated images depict real-world
+entities~\citep{kitten2024}, and FAGER builds a factual rubric from language-model
+knowledge and reference images~\citep{fager2026}. Large proprietary
+vision-language models such as GPT-4V have also been used directly as
+evaluators~\citep{gpt4v2024}. This thesis follows the claim-based approach with
+two differences. First, the claims are extracted from the image by a judge that
+does not know which entity the image should show. Second, they are checked
+against an external text reference, the Wikipedia lead summary. Instead of a
+proprietary model, the judge is Gemma~4~31B, an open-weight VLM by Google
+(Section~\ref{sec:model-selection}), so that the evaluation can be re-run
+without a commercial API; Section~\ref{sec:limitations} discusses the cost of
+this choice.
 
-Table~\ref{tab:benchmark-positioning} summarizes the main design choices that
-distinguish this benchmark from closely related factuality-oriented work. The
-counts for prior benchmarks refer to the configurations reported in their
-respective papers and are included for positioning rather than as a claim that
-all studies use identical sampling protocols. The units are also not identical:
-the numbers refer to entities in this work and KITTEN, concepts in
-T2I-FactualBench, and tasks or study-specific prompt sets in HEIM and DoFaiR.
-They should therefore not be read as directly comparable sample sizes.
+
+\section{Hallucinations and Long-Tail Entities}
+\label{sec:hallucinations}
+
+When a generated image shows something false about the entity, this is called
+a \emph{hallucination}, a term taken from text generation. Surveys of
+hallucination in text generation distinguish \emph{intrinsic} hallucinations,
+which contradict the source, from \emph{extrinsic} ones, which the source can
+neither confirm nor refute~\citep{hallucinationNLG2023,hallucinationSurvey}.
+This thesis counts only the intrinsic kind: a proposition is a hallucination if
+the Wikipedia lead summary shows it to be false. A background that the summary
+does not mention, for example, is extrinsic and is not counted
+(Section~\ref{sec:visual-facts}).
+
+Earlier work has also studied what makes such errors more likely and how to
+reduce them. Retrieving real reference images during generation has been
+proposed as a remedy~\citep{preventimagehallucination2024}, and DoFaiR shows
+that instructions to increase demographic diversity can make images of
+historical subjects factually inaccurate~\citep{dofair2024}. A further factor,
+and the one studied here, is how well known an entity is. For language models,
+this factor is well documented: their factual accuracy drops sharply for
+entities that are rarely mentioned on the web~\citep{mallen2023,kandpal2023}.
+Image generators may behave in the same way, since they have seen few or no
+pictures of rare entities during training. To test this, the benchmark
+includes a \emph{Long-tail} tier of entities with very short Wikipedia
+articles, which serve as a proxy for low popularity
+(Section~\ref{sec:benchmark-design}).
+
+
+\section{Factual Knowledge in Language Models and Image Generators}
+\label{sec:llm-vs-t2i}
+
+For language models, the amount of factual knowledge has been estimated
+directly.
+GPTKB materializes the knowledge of GPT-4o-mini by recursively prompting the
+model for facts about entities; the resulting knowledge base contains
+101~million triples about 2.9~million entities~\citep{gptkb2025}. The authors
+relate this number to model size: at an estimated 8~billion parameters,
+GPT-4o-mini uses about 79 parameters per retrieved triple. A later version built
+from GPT-4.1 contains 100~million triples about 6.1~million
+entities~\citep{gptkb15}. Controlled experiments on synthetic data give an upper
+bound: a language model can store about two bits of knowledge per
+parameter~\citep{allenzhu2025}.
+
+No comparable estimate appears to exist for image generators, and their
+knowledge differs
+from that of LLMs in three ways. First, the unit is different. An LLM states a
+fact as a sentence that can be mapped to a subject--relation--object triple. An
+image states facts implicitly, and only facts that are visible: a platypus's
+bill or a bus livery can be drawn, a birth date or an election result cannot,
+except as written text. The facts counted in this thesis are therefore visual
+propositions (Section~\ref{sec:visual-facts}), not triples. Second, the
+elicitation is different. GPTKB asks many questions per entity and follows links
+to further entities; a zero-context image prompt gives the model one attempt per
+entity, and the model cannot abstain. Third, the knowledge is stored in
+different components. As described in Section~\ref{sec:t2i-models}, the FLUX
+models contain a language model:
+FLUX.2-dev couples a 24-billion-parameter Mistral vision-language model, which
+Black Forest Labs describe as the source of ``real world knowledge'', with a
+32-billion-parameter rectified-flow transformer that produces the
+image~\citep{flux2}. FLUX.2-klein-4B pairs a 4-billion-parameter transformer
+with the Qwen3-4B language model~\citep{flux2klein}. OpenAI does not disclose
+the size or architecture of GPT Image 2~\citep{gptimage2}; its predecessor was
+introduced as image generation built into GPT-4o, which lets the model ``link
+its knowledge between text and images''~\citep{openai4oimage}. An image
+generator can therefore fail in two places: its language component may not know
+the entity, or it may know the entity while the image component cannot draw
+what it knows.
+
+\section{Positioning of This Work}
+\label{sec:positioning}
+
+Table~\ref{tab:benchmark-positioning} compares this benchmark with the most
+closely related work. The numbers are taken from the respective papers and
+count different units: entities in this work and KITTEN, concepts in
+T2I-FactualBench, scenarios in HEIM, and test prompts in DoFaiR.
 
 \begin{table}[ht]
 \centering
 \footnotesize
 \caption{Comparison with related knowledge-intensive and factuality benchmarks.}
 \label{tab:benchmark-positioning}
-\begin{tabular}{p{2.2cm}p{1.4cm}p{1.2cm}p{4.8cm}p{3.2cm}}
+\begin{tabular}{p{2.2cm}p{1.6cm}p{1.2cm}p{4.6cm}p{3.2cm}}
 \toprule
-Benchmark & Entities & Models & Evaluation & Release/access \\
+Benchmark & Test items & Models & Evaluation & Release/access \\
 \midrule
-This work & 298 & 3 & Blind VLM description, Wikipedia-grounded proposition checks & Public code, images, results \\
+This work & 298 entities & 3 & Blind VLM description, Wikipedia-grounded proposition checks & Public code, images, results \\
 T2I-FactualBench & 1,600 concepts & 11 & Multi-round VQA and human validation & Benchmark release \\
-KITTEN & 322 visual entities & Multiple & Knowledge-intensive entity evaluation with automatic and human metrics & Benchmark/paper release \\
-HEIM & Multiple tasks & 62 models & Holistic alignment, quality, safety, and bias evaluation & Benchmark suite \\
-DoFaiR & Study-specific prompts & Multiple & Factuality effects of diversity interventions & Research framework \\
+KITTEN & 322 entities & 7 & Knowledge-intensive entity evaluation with automatic and human metrics & Benchmark/paper release \\
+HEIM & 62 scenarios & 26 & Holistic alignment, quality, safety, and bias evaluation & Benchmark suite \\
+DoFaiR & 756 test prompts & DALL-E 3 & Factuality effects of diversity interventions & Benchmark and code \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-The present benchmark is smaller than broad evaluation suites, but it keeps the
-entity prompt deliberately minimal and applies the same blind, reference-grounded
-pipeline to all models. Its distinguishing output is therefore not a larger
-leaderboard; it is the combination of a public image corpus, explicit missing
-coverage, coarse type and feature checks, and proposition-level factuality
-statistics for named real-world entities.
+This benchmark is smaller than the broad evaluation suites. It differs from
+them in three respects: the prompt contains only the entity name, the same
+two-step evaluation with a blind first call is applied to all models, and the
+release contains the full image corpus together with a record of the images
+that could not be generated. In addition, part of its entities are sampled at
+random from Wikipedia and stratified by popularity instead of being chosen by
+hand.
 
-\section{Hallucinations and Long-Tail Entities}
-
-In this work, a hallucination is an atomic visual proposition that is unsupported
-by or contradicted by the reference description. The definition is tied to an
-explicit reference rather than to a generic expectation of what an image should
-look like. The benchmark therefore reports both the number of propositions
-generated and the share of propositions classified as hallucinations. This is
-also consistent with broader taxonomies of hallucination in natural-language
-generation and vision,
-where unsupported content is treated as a grounding failure rather than merely
-as a stylistic variation~\citep{hallucinationNLG2023,hallucinationSurvey,ihalla2024}. Retrieval-based
-grounding and refinement provide complementary ways to reduce such errors
-~\citep{preventimagehallucination2024,fager2026}. Work on factuality tax,
-diversity interventions, and demographic stereotypes also shows why historical
-and culturally specific entities require caution~\citep{dofair2024,stereotypes2024}.
-This is conceptually close to the present study: widespread T2I usage can
-amplify social and demographic biases even when the generation process is not
-explicitly adversarial, and factuality problems can therefore be coupled to
-broader representational distortions. Unlike the demographic factuality tax
-studied by DoFaiR~\citep{dofair2024}, the present benchmark focuses on the
-entity-popularity dimension: whether a model becomes increasingly error-prone as
-names become less common, less canonical, and harder to ground visually.
-
-The Long-tail setting is the lowest-popularity tier of the Random subset in this
-benchmark. It is defined by short English Wikipedia article length and therefore
-corresponds to the least visible and least canonical entities in the sample, not
-by an ad hoc label or a vague sense of rarity. This setting matters because
-entity popularity is strongly associated with the amount of training signal and
-the number of easily recognizable visual patterns. Rare or niche entities are
-less likely to be represented by a canonical image in the training data, which
-makes factuality more brittle even when the output remains visually coherent.
 
 \chapter{Methodology}
+\label{chap:methodology}
+
+This chapter describes how the benchmark was built and evaluated.
+Section~\ref{sec:benchmark-design} introduces the entities,
+Section~\ref{sec:model-selection} the image generators, the judge, and the
+generation setup, and Section~\ref{sec:evaluation-pipeline} the two-step
+evaluation. Section~\ref{sec:visual-facts} explains which kinds of
+propositions the judge produces, and Section~\ref{sec:fair-comparison} how
+missing images are handled. The last two sections describe two additional
+analyses: the relation between the number of propositions and the error rate
+(Section~\ref{sec:fact-count}) and an extrapolation of the results to the whole
+English Wikipedia (Section~\ref{sec:weighted-extrapolation}).
 
 \section{Benchmark Design}
+\label{sec:benchmark-design}
 
-The benchmark contains 298 entities. The curated subset consists of four domains:
-Famous Landmarks and Architecture, Historical Figures, Rare Flora and Fauna, and
-Specific Cultural Artifacts and Foods. Each domain contains 25 entities, giving
-100 curated entities. The remaining 198 entities form the Random subset, divided
-into three equal popularity tiers. The tier label is part of the released entity
-metadata and is accompanied by the \texttt{Wiki\_Length} field, the raw MediaWiki
-article length in characters for the corresponding English-language article.
-This is the exact operationalization used during collection: we did not assign
-tiers by token counts, word counts, or model-tokenization heuristics. The
-thresholds were: Famous: $\geq 100{,}000$ characters; Medium: $20{,}000$ to
-$<100{,}000$ characters; Long-tail: $500$ to $<20{,}000$ characters. Famous,
-Medium, and Long-tail are therefore dataset strata based on Wikipedia article
-length as a popularity proxy, not claims about the exact natural frequency of
-entities in Wikipedia. Each tier contains 66 entities so that no tier dominates
-the sample.
-
-This choice is scientifically defensible because article length is a cumulative
-signal of public attention and knowledge elaboration. High-popularity topics draw
-more editors, more references, more cross-links, and more repeated revisions,
-which steadily expands the article text. In Wikipedia, article size therefore
-tracks the amount of public attention and the depth of available documentation,
-not merely the semantic importance of the topic in an abstract sense. A shorter
-article is not automatically less "real" or less important; it is usually a
-marker of lower visibility and less accumulated descriptive material. This is
-why article length is a useful, but imperfect, proxy for popularity in a
-knowledge base.
-
-For curated entities, the benchmark provides an expected type and a distinctive
-feature. For Random entities, these fields are intentionally undefined.
-Consequently, RQ1 and RQ2 are evaluated only on curated entities, while RQ3 is
-evaluated on both curated and Random entities.
-
-Table~\ref{tab:benchmark-composition} summarizes the composition of the
-benchmark. The curated categories were chosen to cover architecture, people,
-biology, and culturally specific objects. This makes it possible to distinguish
-general visual competence from knowledge that is concentrated in a particular
-domain. The Random subset provides a broader test of entities that are not
-necessarily represented by a canonical visual prototype.
+The benchmark consists of 298 entities in two subsets that serve different
+purposes (Table~\ref{tab:benchmark-composition}). The \emph{curated} subset
+contains 100 entities selected by hand, for which the expected appearance is
+annotated; it is used for all three research questions. The \emph{Random}
+subset contains 198 entities sampled from Wikipedia; it has no annotations and
+is used for RQ3 and for the analysis by popularity.
 
 \begin{table}[ht]
 \centering
@@ -313,380 +399,347 @@ Total & 298 & -- \\
 \end{tabular}
 \end{table}
 
-\section{Model Selection, Prompts, and Image Generation}
+The curated entities come from four domains with 25 entities each: famous
+landmarks and architecture, historical figures, rare flora and fauna, and
+specific cultural artifacts and foods. The domains cover buildings, people,
+living beings, and objects, so that knowledge concentrated in one domain can be
+separated from general visual competence. Within each domain, the author chose
+entities that are recognizable but differ in how familiar they are. Each
+curated entity is annotated with an expected type and a distinctive feature.
+The expected type names the class of the entity (for example, ``Castle'' for
+Neuschwanstein or ``Mammal'' for Platypus). The distinctive feature is a
+visible property that separates the entity from similar ones (for example,
+``duck-like bill and beaver-like tail'' for Platypus).
+
+The Random subset tests entities that were not chosen by hand. Its entities
+were drawn with the MediaWiki \texttt{list=random} API from the article
+namespace of the English Wikipedia; titles containing ``List of'' or
+``disambiguation'' were skipped. Each drawn article was assigned to a
+popularity tier by its size, measured in bytes of wikitext (the article's
+source text) as returned by the MediaWiki API and released as the
+\texttt{Wiki\_Length} field: Famous for at least 100{,}000 bytes, Medium for
+20{,}000 to less than 100{,}000 bytes, and Long-tail for 500 to less than
+20{,}000 bytes. Sampling continued until each tier held 66 entities, so that no
+tier dominates the sample.
+
+Article size serves as a proxy for popularity: widely known topics attract more
+editors and references, and their articles grow accordingly. The proxy is
+imperfect, since a short article can also describe an important but
+little-documented topic. The tiers are therefore strata of the sample, not a
+claim about how often an entity occurs on the web.
+
+
+\section{Models and Image Generation}
+\label{sec:models-and-image-generation}
 \label{sec:model-selection}
 
-The three tested image generators represent two practically important settings.
-GPT Image 2 is a hosted commercial model with provider-level safety filtering.
-FLUX.2-dev is an open-weight development model hosted through the ScaDS.AI
-service, while FLUX.2-klein-4B is a substantially smaller model from the same
-family. This combination compares a commercial system with a larger open model
-and a compact open model under the same entity prompts. It is not intended as a
-universal model leaderboard; it tests how model scale, training, and deployment
-constraints appear in this factuality benchmark. The evaluation judge is \texttt{gemma-4-31B-it}, served through ScaDS.AI's
-``alias-vision'' OpenAI-compatible endpoint. This choice was made for
-reproducibility and cost reasons: it allows the full evaluation pipeline to run
-without a paid commercial API key, consistent with the benchmark's goal of
-being fully re-runnable from the public release.
+The three image generators cover the two settings in which such models are used
+in practice: a proprietary service and openly available models. GPT Image 2 is
+the image model that OpenAI released in April 2026; it runs only on OpenAI's
+servers and filters requests with its own safety system. FLUX.2-dev and
+FLUX.2-klein-4B are open-weight models from the same family, FLUX.2-klein-4B
+being the much smaller one. Comparing the two FLUX models shows the effect of
+model size within one family, and comparing them with GPT Image 2 shows how
+open models relate to a commercial one. The selection is not meant as a
+general leaderboard.
 
-Every entity is rendered with the same generation prompt:
+
+Table~\ref{tab:model-sizes} lists the published sizes of the three generators
+and, for comparison, of the language model analysed in GPTKB
+(Section~\ref{sec:llm-vs-t2i}).
+
+\begin{table}[ht]
+\centering
+\footnotesize
+\caption{Size of the evaluated image generators and of the LLM used for GPTKB.
+Parameter counts are those published by the providers; the GPT-4o-mini value is
+the estimate used by the GPTKB authors.}
+\label{tab:model-sizes}
+\begin{tabular}{llll}
+\toprule
+Model & Language component & Image component & Access \\
+\midrule
+GPT Image 2 & not disclosed & not disclosed & OpenAI API only \\
+FLUX.2-dev & Mistral VLM, 24B & rectified-flow transformer, 32B & open weights \\
+FLUX.2-klein-4B & Qwen3-4B, 4B & rectified-flow transformer, 4B & open weights \\
+\midrule
+GPT-4o-mini (GPTKB) & about 8B (estimate) & -- & OpenAI API only \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+As described in Section~\ref{sec:motivation}, every entity is rendered with the
+same zero-context prompt:
 
 \begin{quote}
 \texttt{An image of [entity].}
 \end{quote}
 
-No type, feature, Wikipedia text, or additional visual description is included.
-This is intentional: the model is evaluated on the amount of factual visual
-knowledge it can recover from a bare entity name alone.
+GPT Image 2 was called through OpenRouter, a service that forwards requests to
+the OpenAI API (model \texttt{openai/gpt-image-2}), at $1024\times1024$ pixels.
+The two FLUX models are run by the Center for Scalable Data Analytics and
+Artificial Intelligence (ScaDS.AI) Dresden/Leipzig and were called through its
+image-generation API with the default settings; they also return
+$1024\times1024$ images. Each model generated one image per entity, without a
+fixed random seed. The generation script skips existing files, so interrupted
+runs can be resumed without repeating requests.
 
-The evaluation stage uses separate prompts and two judge calls per image. First,
-the blind-classification prompt hides the entity name and requests a predicted
-type, a short description, and a list of atomic propositions. A simplified
-example is shown below:
+The judge used in the evaluation (Section~\ref{sec:evaluation-pipeline}) is
+Gemma~4~31B in its instruction-tuned version (\texttt{gemma-4-31B-it}), an
+open-weight VLM by Google with about 31~billion parameters that accepts both
+text and images~\citep{gemma4}. It is also served by ScaDS.AI. An open-weight
+judge was chosen so that the complete evaluation can be re-run from the public
+release without a paid commercial API.
 
-\begin{quote}
-\texttt{You are not told what this image is supposed to depict. Predict the\newline
-primary object type, describe the visible elements, and output short\newline
-atomic factual claims about the image.}
-\end{quote}
 
-Second, the grounded fact-check prompt receives the entity name, its Wikipedia
-lead summary, the curated expected type and feature when available, and the
-blind description. It asks the judge to return RQ1 and RQ2 decisions for
-curated entities and a hallucination count for every entity. The entity name is
-supplied only in this second call to select the reference article; it is not
-supplied to the blind classifier that produces the visual observations.
-
-Images were generated with GPT Image 2, FLUX.2-dev, and FLUX.2-klein-4B. The
-script stores outputs by model and entity, and it skips existing files so
-interrupted runs can be resumed without duplicating requests.
-
-Figure~\ref{fig:benchmark-pipeline} summarizes the full workflow from entity list
-to final metrics.
+\section{Visual Evaluation Pipeline}
+\label{sec:evaluation-pipeline}
 
 \begin{figure}[ht]
 \centering
-\resizebox{\textwidth}{!}{%
 \begin{tikzpicture}[
-  box/.style={draw, rounded corners, align=center, minimum width=2.7cm, minimum height=1.2cm},
-  font=\small,
-  node distance=1.8cm and 2.6cm,
-  scale=1,
-  transform shape
+  box/.style={draw, rounded corners, align=center, text width=2.7cm,
+              minimum height=1.2cm, font=\footnotesize},
+  res/.style={draw, rounded corners, align=center, text width=3.0cm,
+              minimum height=0.75cm, font=\footnotesize, fill=gray!12},
+  arr/.style={-stealth, thick},
+  node distance=0.7cm and 0.75cm
 ]
-\node[box] (entities) {Benchmark entities \& popularity tiers};
-\node[box, right=of entities] (prompt) {Zero-context generation prompt};
-\node[box, right=of prompt] (models) {GPT Image 2, FLUX.2-dev, FLUX.2-klein-4B};
-\node[box, right=of models] (img) {Generated images};
-\node[box, below=of img] (judge) {Blind VLM evaluation};
-\node[box, left=of judge] (rq1) {RQ1 type match};
-\node[box, left=of rq1] (rq2) {RQ2 feature presence};
-\node[box, left=of rq2] (rq3) {RQ3 proposition-level factuality};
-\draw[->] (entities) -- (prompt);
-\draw[->] (prompt) -- (models);
-\draw[->] (models) -- (img);
-\draw[->] (img) -- (judge);
-\draw[->] (judge) -- (rq1);
-\draw[->] (rq1) -- (rq2);
-\draw[->] (rq2) -- (rq3);
+\node[box] (ent) {Benchmark entities\\(100 curated, 198 Random)};
+\node[box, right=of ent] (prompt) {Prompt\\\texttt{An image of [entity].}};
+\node[box, right=of prompt] (gen) {GPT Image 2, FLUX.2-dev, FLUX.2-klein-4B};
+\node[box, right=of gen] (img) {One image per entity and model};
+\node[box, below=1.1cm of img] (blind) {Judge call 1 (blind): image only $\rightarrow$ type, description, propositions};
+\node[box, left=of blind] (ground) {Judge call 2 (grounded, text only)};
+\node[box, below=0.8cm of ground] (wiki) {Entity name, Wikipedia lead, curated type and feature};
+\node[res, left=of ground] (rq2) {RQ2: feature present?};
+\node[res, above=0.2cm of rq2] (rq1) {RQ1: type matches?};
+\node[res, below=0.2cm of rq2] (rq3) {RQ3: number of false propositions};
+\draw[arr] (ent) -- (prompt);
+\draw[arr] (prompt) -- (gen);
+\draw[arr] (gen) -- (img);
+\draw[arr] (img) -- (blind);
+\draw[arr] (blind) -- (ground);
+\draw[arr] (wiki) -- (ground);
+\draw[arr] (ground.west) -- (rq1.east);
+\draw[arr] (ground.west) -- (rq2.east);
+\draw[arr] (ground.west) -- (rq3.east);
 \end{tikzpicture}
-}%
-\caption{Overview of the benchmark pipeline: entity selection, generation, blind
-visual evaluation, and final factuality metrics.}
+\caption{Benchmark pipeline: generation, blind judge call, and grounded judge
+call.}
 \label{fig:benchmark-pipeline}
 \end{figure}
 
-\section{Visual Evaluation Pipeline}
+Each image is evaluated in two calls to the judge
+(Figure~\ref{fig:benchmark-pipeline}). Both calls use temperature~0, which
+makes the output as deterministic as possible, and return machine-readable
+JSON; Appendix~\ref{sec:judge-prompts} gives the exact prompts. In the first,
+\emph{blind} call, the judge sees only the image, not the entity name, and
+returns a predicted type, a short description, and a list of propositions about
+what is visible. Keeping this call blind prevents the entity name from
+suggesting what the judge should see. The second, \emph{grounded} call does not
+see the image. It receives the entity name, the Wikipedia lead summary, the
+curated type and feature (for curated entities), and the output of the blind
+call. It returns the decisions for RQ1 and RQ2 and the number of propositions
+that the lead summary shows to be false. Wikipedia titles are resolved through
+the MediaWiki search API, and the retrieved lead summaries are cached in the
+released evaluation directory. All 885 successful evaluations use a Wikipedia
+lead summary as reference; for two curated entities the search returned the
+wrong article (Section~\ref{sec:limitations}).
 
-The evaluation uses two stages. First, the judge model (Section~\ref{sec:model-selection}) receives the image without
-the entity name and produces a description, a predicted entity type, and a
-feature judgment. The predictions are compared with the curated benchmark
-annotations for RQ1 and RQ2. Second, the judge produces atomic propositions
-about visible facts. Each proposition is checked against a Wikipedia lead
-summary for the entity. Wikipedia titles are resolved through the MediaWiki
-search API, and the selected lead summaries are cached in the released
-evaluation directory. All 885 successful evaluation rows in the final CSV
-report Wikipedia as their ground truth source.
 
-The evaluator records the number of propositions and hallucinations. The main
-normalized metric is
 
+
+For RQ1, a result is correct if the grounded call accepts the type predicted in
+the blind call as compatible with the curated expected type. The blind prompt offers
+broad example labels (Building, Person, Animal, Landscape, Object, None) but
+does not restrict the answer to them, while the curated types are more
+specific. A broad label therefore counts as a match when it covers the expected
+type: ``Building'' matches ``Castle'' for Neuschwanstein, and ``Animal''
+matches ``Mammal'' for Platypus. A label from a different class, such as
+``Person'' for a pastry, is a mismatch. RQ2 is decided separately: it is
+correct only if the blind description or propositions clearly indicate the
+annotated distinctive feature. Since the grounded call sees only this text, a
+feature that is drawn but not mentioned in the blind call counts as absent. Keeping RQ1 and RQ2 apart prevents a broad type match from being taken
+as recognition of the entity.
+
+For RQ3, the decision is made per proposition. A proposition that the lead
+summary shows to be false, or that contradicts it, is counted as a
+hallucination (Section~\ref{sec:hallucinations}); a proposition that the
+summary does not mention is not counted. Counting per proposition avoids
+treating an image with ten correct claims and one false claim like an image
+with a single false claim.
+
+The counts are aggregated per model into the main metric, the hallucination
+rate
 \begin{equation}
 \mathrm{HallucinationRate}(m) =
 \frac{\sum_i H_{i,m}}{\sum_i P_{i,m}},
 \end{equation}
-
-where $H_{i,m}$ is the hallucination count for image $i$ generated by model $m$,
-and $P_{i,m}$ is the number of propositions generated for that image.
+where $H_{i,m}$ is the number of hallucinations in image $i$ generated by model
+$m$, and $P_{i,m}$ is the number of propositions extracted from that image.
 This is a pooled rate: it sums hallucinations and propositions before dividing,
-so an image with a very short description does not receive the same weight as a
-longer description merely because both contribute one image-level ratio. The
-Spearman analysis below uses a different per-image rate,
-$H_{i,m}/P_{i,m}$, to test whether proposition count is monotonically associated
-with the error fraction across images.
+so an image with a very short description does not receive the same weight as
+a longer one. The Spearman analysis in Section~\ref{sec:fact-count-results}
+uses the per-image rate $H_{i,m}/P_{i,m}$ instead.
 
-For RQ1, a result is correct if the blind classifier's predicted type is judged
-compatible with the curated expected type by the grounded judge. The type is
-deliberately coarse: it describes the entity class, not the exact entity name.
-Thus, labels such as ``building'', ``person'', and ``animal'' are accepted when
-they are semantically compatible with the benchmark annotation; a more specific
-label such as ``church'' can also match a compatible broader label such as
-``building''. A merely related but incompatible class, such as ``vehicle'' for a
-building, is a mismatch. RQ2 is separate: it is correct only when the annotated
-distinctive feature is visibly supported. This separation prevents a broad type
-match from being mistaken for entity-level recognition.
+All rates are reported with 95\% Wilson confidence intervals, a standard
+interval for proportions that remains reliable for small samples and for rates
+close to 0 or 1. Differences between two models in RQ1 and RQ2 are tested with
+two-sided two-proportion $z$-tests.
 
-\section{Qualitative Examples}
-\label{sec:qualitative-examples}
 
-The quantitative metrics are complemented by image-level examples. Dennis Dart
-illustrates a concrete failure: the generated image can depict a plausible
-physical object while failing to depict the bus model described by Wikipedia.
-By contrast, Freedom of religion in Austria is an abstract entity. A generated
-landscape or a typographic composition may not directly contradict the lead
-summary, even though it provides little evidence about the legal concept. This
-asymmetry is important for interpreting RQ3: a low hallucination count for an
-abstract entity can reflect weak testability rather than successful knowledge.
-Nelson and Colne and Heath Streak show the complementary case in which the judge
-has more concrete visual propositions to check.
+\section{What Counts as a Visual Fact}
+\label{sec:visual-facts}
 
-Figure~\ref{fig:qualitative-examples} shows representative outputs from the
-released image corpus. These examples are illustrative and are not used as
-additional statistical observations.
+A language model states a fact in a sentence; an image states facts only
+implicitly. The blind call makes them explicit as propositions
+(Section~\ref{sec:rqs}), which are the unit counted in RQ3. Not all propositions
+carry the same kind of information: those in the corpus are of five kinds.
+Table~\ref{tab:fact-types} gives one example of each, taken from the
+evaluation file.
 
-\begin{figure}[ht]
+
+\begin{table}[ht]
 \centering
-\begin{minipage}{0.24\textwidth}\centering
-\includegraphics[width=\linewidth]{../Code/generation/generated_images/scads_flux2_dev/Random_Medium/Dennis_Dart.png}\\
-\scriptsize Dennis Dart
-\end{minipage}\hfill
-\begin{minipage}{0.24\textwidth}\centering
-\includegraphics[width=\linewidth]{../Code/generation/generated_images/scads_flux2_dev/Random_Medium/Freedom_of_religion_in_Austria.png}\\
-\scriptsize Freedom of religion in Austria
-\end{minipage}\hfill
-\begin{minipage}{0.24\textwidth}\centering
-\includegraphics[width=\linewidth]{../Code/generation/generated_images/scads_flux2_dev/Random_Medium/Nelson_and_Colne.png}\\
-\scriptsize Nelson and Colne
-\end{minipage}\hfill
-\begin{minipage}{0.24\textwidth}\centering
-\includegraphics[width=\linewidth]{../Code/generation/generated_images/scads_flux2_dev/Random_Medium/Heath_Streak.png}\\
-\scriptsize Heath Streak
-\end{minipage}
-\caption{Qualitative examples from the benchmark image corpus. The examples
-illustrate why concrete and abstract entities can yield different numbers of
-checkable propositions.}
-\label{fig:qualitative-examples}
-\end{figure}
+\footnotesize
+\caption{Kinds of propositions extracted from generated images, with examples
+from the evaluation corpus.}
+\label{tab:fact-types}
+\begin{tabular}{p{2.1cm}p{6.6cm}p{4.3cm}}
+\toprule
+Kind & Example proposition (entity, model) & Checkable against the lead summary? \\
+\midrule
+Type & ``The vehicle is a bus'' (Dennis Dart, GPT Image 2) & Yes, almost always \\
+Appearance & ``There are multiple vertical fluted columns'' (Parthenon, FLUX.2-dev) & Often, if the summary describes the appearance \\
+World knowledge & ``There is a silver fern logo and the text `NEW ZEALAND' on the left side of the chest'' (Heath Streak, GPT Image 2) & Sometimes; here it contradicts ``Zimbabwean cricketer'' \\
+Rendered text & ``The text `DENNIS Dart' is written on the front'' (Dennis Dart, GPT Image 2) & Rarely; it mostly repeats the prompt \\
+Scene & ``The sky is clear and blue'' (Parthenon, FLUX.2-dev) & Almost never \\
+\bottomrule
+\end{tabular}
+\end{table}
 
-For RQ3, the binary decision is made at proposition level before aggregation. A
-proposition that is not supported by the reference or that contradicts it
-contributes one hallucination. This approach avoids treating an image with ten
-correct and one incorrect claim as equivalent to an image with only one incorrect
-claim.
+Type and appearance propositions carry most of the entity knowledge.
+World-knowledge propositions are the most informative ones: a jersey, a flag,
+or a bus livery links the entity to another entity (a country, an operator, a
+place), which is the kind of fact a knowledge base stores as a triple. Rendered
+text and scene propositions carry little knowledge. A keyword rule applied to
+all 6{,}439 propositions of the common set (the 289 entities generated by all
+three models; Section~\ref{sec:fair-comparison}) gives a rough picture: 18--24\% of
+the propositions describe the background, lighting, or weather, and 9\% (FLUX
+models) to 20\% (GPT Image 2) transcribe text written in the image. The
+remaining 61--68\% describe the depicted object itself. The rule is simple, so
+these shares are approximate.
 
-\section{Fair Comparison and Missing Evaluations}
+The distinction matters for RQ3. Since only propositions shown to be false are
+counted, scene and text propositions are almost never counted as errors, and an
+image that shows only a generic landscape can reach a hallucination rate of
+zero (Section~\ref{sec:qualitative-examples}).
 
-Comparing only successful outputs can be misleading when models have unequal
-coverage. The main comparison therefore uses the intersection of entity sets
-available for all three models. This is the \emph{fair common set}: the same 289
-entity names are included for GPT Image 2, FLUX.2-dev, and FLUX.2-klein-4B.
-The word ``fair'' refers only to equal entity coverage; it does not imply that
-the set is statistically representative of Wikipedia. Available-case results
-are retained for transparency, while headline aggregate tables use the common
-set to avoid confusing missing coverage with model quality.
+\section{Common Set and Missing Evaluations}
+\label{sec:fair-comparison}
 
-The nine GPT Image 2 generations refused by the provider's safety system are
-recorded as missing evaluations. They are not counted as correct or incorrect
-model outputs, and they are reported separately so that policy filtering is not
-misinterpreted as a factual failure.
+Not every model produced an image for every entity: GPT Image 2 refused nine of
+the 298 prompts through its safety system. Comparing each model on all of its
+own images would therefore compare the models on different entities. The main
+comparison instead uses the \emph{common set}, the 289 entities for which all
+three models produced an image. The nine refusals are recorded separately and
+counted neither as correct nor as incorrect, so that a policy decision of the
+provider is not mistaken for missing knowledge. Results on all images of each
+model, called \emph{available-case} results, are reported only where they show
+that the restriction to the common set does not change a conclusion.
 
-\section{Fact-Count Analysis}
 
-The number of propositions is itself informative. A short description contains
-fewer checkable claims, but may also convey less information. The analysis
-therefore reports average propositions by model and popularity tier, total
-propositions, raw hallucination counts, and normalized rates. Spearman rank
-correlation is used descriptively to examine whether verbosity is associated with
-the number of hallucinations or with the image-level hallucination rate. A
-Spearman coefficient measures the monotonic relationship between two variables:
-a value near zero indicates little or no consistent association, while a value
-closer to $1$ or $-1$ indicates a stronger monotonic trend. The observed
-correlations between proposition count and image-level hallucination rate are
-0.10, 0.06, and 0.08 for GPT Image 2, FLUX.2-dev, and FLUX.2-klein-4B,
-respectively. These values are weak and do not support a claim that verbosity
-alone explains the hallucination results. The correlation is used only as an
-auxiliary diagnostic, not as a proof of causal mechanism.
+\section{Proposition-Count Analysis}
+\label{sec:fact-count}
+
+The hallucination rate depends on how many propositions an image yields: a
+short description offers fewer chances to be wrong, but also says less about
+the entity. The analysis therefore reports the average number of propositions
+per image by model and popularity tier alongside the rates. Spearman rank
+correlation is used to check whether images with more propositions also have a
+larger share of false ones. A coefficient near zero indicates no consistent
+monotonic relationship, and values close to $1$ or $-1$ indicate a strong
+one.
+
 
 \section{Weighted Extrapolation to the Full Encyclopedia}
 \label{sec:weighted-extrapolation}
 
-The benchmark's Random subset uses an equal split of 66 entities per popularity
-tier by design, so that no tier is statistically underpowered. This equal split
-does not reflect the true prevalence of each tier in English Wikipedia, so a
-naive extrapolation that averages the three tier-level correct-fact rates with
-weight $1/3$ would systematically misrepresent the population.
+The last analysis estimates how many non-contradicted visual propositions a
+model would produce if it drew every entity of the English Wikipedia. This puts the results
+on the same scale as the estimates of LLM knowledge discussed in
+Section~\ref{sec:llm-vs-t2i}. The estimate cannot be obtained by averaging the
+three tiers with equal weights, because the benchmark samples the tiers equally
+by design, while most Wikipedia articles are short. Such a naive average would
+overweight the popular entities.
 
-To correct for this, tier population shares $w_t$ were estimated from
-Wikipedia's own published article-length statistics~\citep{wikipediaarticlesize2026}
-using the same cutoffs as the benchmark's tiering rule on the raw MediaWiki
-length field: Famous: $\geq 100{,}000$ characters; Medium: $20{,}000$ to
-$<100{,}000$ characters; Long-tail: $500$ to $<20{,}000$ characters.
-These are not token counts and not model-token estimates; they are the actual
-article-length thresholds used to create the benchmark strata. For the
-population reweighting we converted these cutoffs to an approximate word-count
-scale only as a notional back-of-the-envelope step, via a rough factor of 7
-bytes per visible word; this is used only to interpret the encyclopedia-level
-shares, not to define the benchmark tiers themselves. Approximately 32\% of
-English Wikipedia articles are classified as stubs~\citep{wikipediastub2026},
-consistent with the estimate that Long-tail articles dominate the encyclopedia.
-Under this conversion, the three tiers correspond to approximately 0.32\%
-(Famous), 5.3\% (Medium), and 94.3\% (Long-tail) of the population within that
-length range once renormalized over the three tiers.
+To correct for this, the population share $w_t$ of each tier was estimated
+from Wikipedia's published statistics on article
+size~\citep{wikipediaarticlesize2026}. These statistics are expressed in words
+rather than bytes of wikitext, so the benchmark thresholds were converted with a
+rough factor of 7 bytes per word; the conversion is used only for this
+estimate, not for assigning entities to tiers. The resulting shares are about
+0.32\% (Famous), 5.3\% (Medium), and 94.3\% (Long-tail). This agrees with the
+fact that about 32\% of all English Wikipedia articles are stubs, that is,
+articles too short to cover their topic adequately~\citep{wikipediastub2026}.
+Because wikitext markup varies across articles, $w_t$ is an order-of-magnitude
+estimate rather than an exact population statistic.
 
 The weighted extrapolation for model $m$ is
-
 \begin{equation}
-\mathrm{TotalFacts}(m) = N_{\text{total}} \times \sum_{t \in \{F,M,L\}}
+\mathrm{Total}(m) = N_{\text{total}} \times \sum_{t \in \{F,M,L\}}
 w_t \cdot \bar{F}_{t,m} \cdot \bigl(1 - \mathrm{HallucinationRate}_{t,m}\bigr),
 \label{eq:weighted-extrapolation}
 \end{equation}
+where $N_{\text{total}} = 7{,}237{,}727$ is the number of English Wikipedia
+articles on 18 September 2026~\citep{wikipediasize2026}, $\bar{F}_{t,m}$ is the
+average number of propositions per image for tier $t$ and model $m$, and
+$\mathrm{HallucinationRate}_{t,m}$ is the pooled hallucination rate for the
+same tier and model; both are reported in Chapter~\ref{chap:results}. The
+product of the last two factors is the number of propositions per image that
+are not shown to be false. It includes scene and
+text propositions (Section~\ref{sec:visual-facts}), so $\mathrm{Total}(m)$ is
+an upper bound on the number of correct entity facts, not a count of verified
+facts.
 
-where $N_{\text{total}} = 7{,}237{,}727$ is the current number of English
-Wikipedia articles~\citep{wikipediasize2026}, $\bar{F}_{t,m}$ is the average
-number of propositions per image for tier $t$ and model $m$, and
-$\mathrm{HallucinationRate}_{t,m}$ is the pooled hallucination rate for the same
-tier and model, both already reported in Table~\ref{tab:tier-hallucination} and
-Section~4.4. The byte-to-word conversion factor is an approximation; wikitext
-markup overhead varies across articles, so $w_t$ should be read as an
-order-of-magnitude estimate rather than an exact population statistic.
-
-The generation script uses ten concurrent workers and skips existing files, but
-it does not record per-request durations. The evaluation log records a
-wall-clock run from 13 August 2026 23:05:48 to 14 August 2026 03:02:26 for the
-766 queued image tasks, approximately 3 hours 57 minutes including Wikipedia
-prefetching and retries. This is a reproducibility observation for that run,
-not a general speed benchmark; request latency depends on provider load,
-concurrency, and retries.
 
 \chapter{Results}
+\label{chap:results}
 
-\section{Dataset Coverage}
+This chapter reports the results in the order of the research questions.
+Section~\ref{sec:coverage} gives the coverage of the three models and an
+overview of all measures. Section~\ref{sec:rq12-results} reports type and
+feature recognition (RQ1 and RQ2), and Sections~\ref{sec:rq3-results}
+and~\ref{sec:fact-count-results} report the hallucination rates and the number
+of propositions per image (RQ3). Section~\ref{sec:extrapolation-results}
+extrapolates the results to the English Wikipedia, and
+Section~\ref{sec:qualitative-examples} shows examples of good and bad
+generations.
 
-The evaluation file contains 885 successful image evaluations: 289 for GPT Image
-2 and 298 for each FLUX model. The nine missing GPT Image 2 evaluations are all
-safety refusals. Since the refusals are concentrated in one model, the fair
-comparison is based on the 289 entities present for every model.
+\section{Coverage and Overall Comparison}
+\label{sec:coverage}
 
-\section{Type and Feature Recognition}
-
-The curated subset supports a direct comparison between coarse entity recognition
-and entity-specific visual knowledge. The available-case type-match rates are
-77.3\% for GPT Image 2, 80.0\% for FLUX.2-dev, and 73.0\% for
-FLUX.2-klein-4B. On the common curated subset, the corresponding rates are
-77.3\%, 79.4\%, and 73.2\%. The phrase \emph{common curated subset} refers to
-the curated entities that were successfully generated by all three models, while
-the available-case numbers use all successful rows for each model separately.
-This distinction matters because the benchmark includes a commercial model with
-safety refusals, so the fair comparison must not silently shrink or expand the
-test set.
-
-FLUX.2-dev therefore has the highest point estimate for coarse type recognition
-in this benchmark. However, none of the three pairwise two-sided
-two-proportion tests is significant for RQ1: GPT Image 2 versus FLUX.2-dev
-$p=0.727$, GPT Image 2 versus FLUX.2-klein-4B $p=0.506$, and FLUX.2-dev versus
-FLUX.2-klein-4B $p=0.311$. The RQ1 ranking should therefore be treated as
-descriptive rather than as evidence of reliable population-level differences.
-Distinctive feature presence tells a different story. GPT Image 2 reaches
-62.9\% on the common curated subset, followed by FLUX.2-dev at 46.4\% and
-FLUX.2-klein-4B at 28.9\%. All three unadjusted pairwise RQ2 tests are
-significant: GPT Image 2 versus FLUX.2-dev $p=0.021$, GPT Image 2 versus
-FLUX.2-klein-4B $p<0.001$, and FLUX.2-dev versus FLUX.2-klein-4B $p=0.0118$.
-These comparisons are exploratory and are reported without a multiple-testing
-correction. Under a Bonferroni-adjusted threshold of 0.0167, the GPT Image 2
-versus FLUX.2-dev comparison would no longer reach significance, while the other
-two comparisons remain significant. They show that matching the broad category is not the same as
-recognizing the feature that makes the entity visually distinctive.
-
-The feature labels were annotated at a level that is informative but still
-realistic. For example, a historical figure may be associated with a distinctive
-style of clothing or a known object, while a flora or fauna entity may be tied to
-an identifiable body structure or signature color pattern. A judge prediction is
-counted as correct when the visual evidence supports the annotated feature, even
-if the model does not name the entity exactly. This avoids over-penalizing
-reasonable paraphrases such as \emph{church-like building} versus the exact
-canonical name while still rewarding entity-specific visual grounding.
-
-\section{Hallucination Rates}
-
-On the common 289-entity set, the overall hallucination rates are 9.0\% for GPT
-Image 2, 9.7\% for FLUX.2-dev, and 17.7\% for FLUX.2-klein-4B. The mean number
-of hallucinations per image is 0.70, 0.69, and 1.32, respectively.
-
-The popularity split reveals a more detailed pattern. GPT Image 2 has rates of
-3.0\% for Famous entities, 7.3\% for Medium entities, and 23.0\% for Long-tail
-entities. For FLUX.2-dev, the rates are 10.9\%, 8.0\%, and 14.6\%; for
-FLUX.2-klein-4B, they are 22.8\%, 15.9\%, and 21.1\%. The Long-tail tier is
-thus not uniformly the worst case for every model, but it is consistently the
-most challenging setting for GPT Image 2 and remains highly error-prone for the
-FLUX models.
-
-\section{Number of Generated Facts}
-
-On the fair common set, FLUX.2-dev generates 7.61 propositions per Famous image,
-7.30 per Medium image, and 6.95 per Long-tail image. FLUX.2-klein-4B generates
-7.75, 7.70, and 7.51 propositions, respectively. GPT Image 2 generates 8.33,
-8.25, and 7.69 propositions. The pattern is therefore not that Long-tail images
-always contain more propositions. GPT Image 2 and FLUX.2-dev decrease by about
-0.6 propositions per image from Famous to Long-tail, whereas the decrease for
-FLUX.2-klein-4B is only about 0.2. The data support a modest tier difference in
-the number of generated propositions, but not a universal popularity effect.
-
-The relationship between proposition count and hallucination rate is weak. The
-Spearman correlations with image-level hallucination rate are 0.10 for GPT Image
-2, 0.06 for FLUX.2-dev, and 0.08 for FLUX.2-klein-4B. These values indicate
-little monotonic association between the number of checkable claims and their
-error fraction. A shorter description is not automatically more factual: it can
-reduce the denominator and the opportunity to make errors while also omitting
-useful evidence. This is why proposition count and hallucination rate are
-reported together.
-
-Figures~\ref{fig:rq1-category} and~\ref{fig:rq2-category} visualize the two
-curated-subset metrics discussed above.
-
-\begin{figure}[ht]
-\centering
-\includegraphics[width=0.82\textwidth]{../Code/analysing/analysis_output/rq1_type_match_by_category.png}
-\caption{Type-match rates by curated category and model.}
-\label{fig:rq1-category}
-\end{figure}
-
-\begin{figure}[ht]
-\centering
-\includegraphics[width=0.82\textwidth]{../Code/analysing/analysis_output/rq2_feature_present_by_category.png}
-\caption{Distinctive-feature presence by curated category and model.}
-\label{fig:rq2-category}
-\end{figure}
-
-The figures show why the overall means should be interpreted together with
-category-level results. Type
-recognition is strongest for flora and fauna, while feature presence varies much
-more between domains. In particular, culturally specific artifacts and foods
-remain difficult: their type-match rates are only 36--40\% for GPT Image 2 and
-FLUX.2-dev and 32\% for FLUX.2-klein-4B. The label ``object'' is not an
-additional ground-truth category in the benchmark; it is one possible generic
-visual prediction emitted by the blind classifier. A generic object-like
-depiction is therefore insufficient to establish the curated artifact or food
-identity.
+The evaluation file contains 885 successful image evaluations: 298 for each
+FLUX model and 289 for GPT Image 2. The nine missing GPT Image 2 images were
+refused by OpenAI's safety system (Table~\ref{tab:missing-eval}). Three
+of them are curated historical figures (Mahatma Gandhi, Frida Kahlo, and
+Salvador Dal\'{i}); the other six are Random entities, four of them films or
+television episodes. As described in Section~\ref{sec:fair-comparison}, the
+refusals are not scored as errors, and all comparisons below use the common set
+of the 289 entities generated by every model: 97
+curated entities and 192 Random entities (64 Famous, 63 Medium, and 65
+Long-tail). Table~\ref{tab:fair-overall} summarizes all three research
+questions on this set.
 
 \begin{table}[ht]
 \centering
 \scriptsize
-\caption{Fair comparison on the 289 entities available for every model. Values
-in parentheses are 95\% Wilson confidence intervals.}
+\caption{Overall comparison on the common set. RQ1 and RQ2 are computed on the 97 curated entities, the other columns on all 289 entities. Values in parentheses are 95\% Wilson confidence intervals.}
 \label{tab:fair-overall}
 \begin{tabular}{lccccc}
 \toprule
-Model & RQ1 & RQ2 & Avg. hallucinations & Avg. facts & RQ3 pooled rate \\
+Model & RQ1 & RQ2 & Avg. hallucinations & Avg. propositions & RQ3 pooled rate \\
 \midrule
 GPT Image 2 & \shortstack{77.3\%\\(68.0--84.5)} & \shortstack{62.9\%\\(53.0--71.8)} & 0.70 & 7.70 & \shortstack{9.0\%\\(8.0--10.3)} \\
 FLUX.2-dev & \shortstack{79.4\%\\(70.3--86.2)} & \shortstack{46.4\%\\(36.8--56.3)} & 0.69 & 7.13 & \shortstack{9.7\%\\(8.4--11.0)} \\
@@ -695,22 +748,79 @@ FLUX.2-klein-4B & \shortstack{73.2\%\\(63.6--81.0)} & \shortstack{28.9\%\\(20.8-
 \end{tabular}
 \end{table}
 
-Table~\ref{tab:fair-overall} is the primary model comparison. It uses the same
-entity set for every model and therefore avoids interpreting the nine refused
-GPT Image 2 prompts as either successes or failures. The table also makes clear
-that no single model dominates every metric: FLUX.2-dev has the highest type
-accuracy (RQ1), GPT Image 2 has the highest feature rate (RQ2), and GPT Image 2
-and FLUX.2-dev are close in normalized hallucination rate (RQ3).
-Unlike the tier-level breakdown in Section~4.4, this table averages across both
-curated and Random entities in the common set. The overall average facts and
-pooled hallucination rate therefore need not equal the averages or rates for the
-Random Famous, Medium, and Long-tail tiers alone.
+No model is best on every measure. FLUX.2-dev has the highest type-match rate
+(RQ1), GPT Image 2 the highest feature rate (RQ2), and GPT Image 2 and
+FLUX.2-dev have similar hallucination rates (RQ3), while the rate of
+FLUX.2-klein-4B is nearly twice as high. The RQ3 columns cover all 289
+entities, curated and Random, and therefore differ from the tier values in
+Table~\ref{tab:tier-hallucination}, which cover only the 192 Random entities.
+
+\section{Type and Feature Recognition}
+\label{sec:rq12-results}
+
+RQ1 and RQ2 are measured on the 97 curated entities of the common set, called
+the \emph{common curated subset} below. On this subset, the type-match rates
+are 77.3\% for GPT Image 2, 79.4\% for FLUX.2-dev, and 73.2\% for
+FLUX.2-klein-4B. The available-case rates are almost the same (77.3\%,
+80.0\%, and 73.0\%), so the restriction to the common set does not change the
+picture.
+
+FLUX.2-dev thus has the highest type-match rate, but the differences are small:
+none of the three pairwise tests is significant for RQ1 (GPT Image 2 versus
+FLUX.2-dev $p=0.727$, GPT Image 2 versus FLUX.2-klein-4B $p=0.506$, and
+FLUX.2-dev versus FLUX.2-klein-4B $p=0.311$). The feature rates differ much
+more. GPT Image 2 shows the distinctive feature for 62.9\% of the entities,
+FLUX.2-dev for 46.4\%, and FLUX.2-klein-4B for 28.9\%. All three pairwise
+differences are significant without a correction for multiple testing (GPT
+Image 2 versus FLUX.2-dev $p=0.021$, GPT Image 2 versus FLUX.2-klein-4B
+$p<0.001$, and FLUX.2-dev versus FLUX.2-klein-4B $p=0.0118$). With a
+Bonferroni correction for three comparisons, which lowers the threshold to
+$0.05/3 \approx 0.0167$, the difference between GPT Image 2 and FLUX.2-dev is
+no longer significant, while the other two remain so. Recognizing the broad
+category is therefore not the same as showing the feature that makes an entity
+visually distinctive. Figures~\ref{fig:rq1-category} and~\ref{fig:rq2-category}
+break both rates down by curated category.
+
+
+\begin{figure}[ht]
+\centering
+\includegraphics[width=0.82\textwidth]{../Code/analysing/analysis_output/rq1_type_match_by_category.png}
+\caption{Type-match rate (RQ1) by curated category on the common curated subset.}
+\label{fig:rq1-category}
+\end{figure}
+
+\begin{figure}[ht]
+\centering
+\includegraphics[width=0.82\textwidth]{../Code/analysing/analysis_output/rq2_feature_present_by_category.png}
+\caption{Distinctive-feature rate (RQ2) by curated category on the common curated subset.}
+\label{fig:rq2-category}
+\end{figure}
+
+The figures show why the overall means should be read together with the
+category results. Type recognition is highest for flora and fauna (92--100\%)
+and lowest for cultural artifacts and foods (36\% for GPT Image 2, 40\% for
+FLUX.2-dev, and 32\% for FLUX.2-klein-4B). The low value for artifacts and
+foods says more about the labels than about the images. In the blind call, the
+judge labels 19 to 23 of the 25 artifact and food images per model as
+``Object'', and
+the grounded call accepts this label for an expected type such as ``food'',
+``pastry'', or ``sword'' in only 27 of 64 cases. The feature rates for the same
+category are much higher (76\%, 60\%, and 32\%), so the models often do draw the
+distinctive feature of the artifact or dish.
+
+\section{Hallucination Rates}
+\label{sec:rq3-results}
+
+On the common set, 9.0\% of the propositions extracted from GPT Image 2
+images contradict the lead summary, 9.7\% for FLUX.2-dev, and 17.7\% for
+FLUX.2-klein-4B (Table~\ref{tab:fair-overall}). Per image, this corresponds to
+0.70, 0.69, and 1.32 false propositions on average.
+Table~\ref{tab:tier-hallucination} splits the rate by popularity tier.
 
 \begin{table}[ht]
 \centering
 \scriptsize
-\caption{Pooled hallucination rate by popularity tier on the common entity set.
-Values in parentheses are 95\% Wilson confidence intervals.}
+\caption{Pooled hallucination rate by popularity tier for the 192 Random entities of the common set. Values in parentheses are 95\% Wilson confidence intervals.}
 \label{tab:tier-hallucination}
 \begin{tabular}{lrrr}
 \toprule
@@ -723,219 +833,317 @@ Long-tail & \shortstack{23.0\%\\(19.5--26.9)} & \shortstack{14.6\%\\(11.6--18.2)
 \end{tabular}
 \end{table}
 
-The tier-level comparison in Table~\ref{tab:tier-hallucination} suggests that
-popularity affects models differently. GPT Image 2 shows a pronounced increase
-in hallucination rate, from 3.0\% for Famous to 23.0\% for Long-tail entities.
-FLUX.2-dev is non-monotonic, dipping to 8.0\% at Medium before rising to 14.6\%
-at Long-tail, while FLUX.2-klein-4B remains comparatively error-prone across all
-tiers and peaks on the Famous tier at
-22.8\%.
-Figure~\ref{fig:hallu-tier} visualizes the same normalized hallucination-rate
-values as Table~\ref{tab:tier-hallucination}.
-The tier table and figure use only the Random entities with a non-empty
-popularity tier; the curated entities are included in the overall Table~\ref{tab:fair-overall}
-but do not belong to a Famous, Medium, or Long-tail tier.
-This is consistent with the interpretation that some models can produce a generic
-visual category for a rarer entity while failing to preserve the entity-specific
-facts that would make the image informative.
+Popularity affects the models differently. For GPT Image 2 the rate rises
+from 3.0\% for Famous to 7.3\% for Medium and 23.0\% for Long-tail entities,
+and the confidence intervals of the three tiers do not overlap. FLUX.2-dev is
+lowest in the Medium tier (8.0\%) and highest in the Long-tail tier (14.6\%).
+FLUX.2-klein-4B is error-prone in every tier and, unexpectedly, highest for
+Famous entities (22.8\%): nine of its 64 Famous images have every proposition
+judged false, and five of them show a single person for an abstract topic such
+as \emph{Marxism} or the \emph{112th United States Congress}. Only GPT Image 2
+shows the clear popularity effect that the Long-tail tier was designed to test.
 
-\begin{figure}[ht]
-\centering
-\includegraphics[width=0.82\textwidth]{../Code/analysing/analysis_output/rq3_hallucination_tax_by_tier.png}
-\caption{Normalized hallucination rate across popularity tiers on the fair common set.}
-\label{fig:hallu-tier}
-\end{figure}
+\section{Number of Propositions per Image}
+\label{sec:fact-count-results}
 
-Figure~\ref{fig:fact-tier} reports the separate proposition-count analysis.
+All three models produce slightly fewer propositions for less popular entities
+(Figure~\ref{fig:fact-tier}). GPT Image 2 produces 8.33, 8.25, and 7.69
+propositions per image for Famous, Medium, and Long-tail entities, FLUX.2-dev
+7.61, 7.30, and 6.95, and FLUX.2-klein-4B 7.75, 7.70, and 7.51. The decrease
+from Famous to Long-tail is about 0.6 propositions for GPT Image 2 and
+FLUX.2-dev and 0.2 for FLUX.2-klein-4B. The higher Long-tail hallucination rate
+of GPT Image 2 therefore does not come from longer descriptions: its Long-tail
+images contain fewer propositions, but a larger share of them is false.
 
 \begin{figure}[ht]
 \centering
 \includegraphics[width=0.82\textwidth]{../Code/analysing/analysis_output/rq3_average_facts_by_tier_fair.png}
-\caption{Average number of generated propositions across popularity tiers.}
+\caption{Average number of propositions per image by popularity tier (192 Random entities of the common set).}
 \label{fig:fact-tier}
 \end{figure}
 
-\section{Weighted Extrapolation Results}
+The relationship between the number of propositions and the hallucination rate
+is weak: the Spearman correlations between the two, computed per image, are
+0.10 for GPT Image 2, 0.06 for FLUX.2-dev, and 0.08 for FLUX.2-klein-4B. Images
+with longer descriptions are thus not systematically less accurate, and shorter
+descriptions are not systematically more accurate. For this reason, the number
+of propositions and the hallucination rate are reported together.
 
-Table~\ref{tab:extrapolation} reports the naive (equal-weight) and
-population-weighted extrapolation of Equation~\ref{eq:weighted-extrapolation}
-for GPT Image 2, FLUX.2-dev, and FLUX.2-klein-4B. The naive extrapolation
-overstates total factual coverage by 19.9\% for GPT Image 2, 8.3\% for
-FLUX.2-dev, and 3.0\% for FLUX.2-klein-4B because it implicitly assumes that
-Famous, Medium, and Long-tail entities are equally common in Wikipedia, whereas
-Long-tail articles dominate the encyclopedia within the benchmark's length
-range. Notably, GPT Image 2's apparent advantage under the naive estimate (52.2M
-versus 46.9M and 44.4M facts) largely disappears once its steeper Long-tail
-hallucination rate is weighted by the true population dominance of the Long-tail
-subset: the weighted estimates converge to 43.5M, 43.3M, and 43.0M facts,
-respectively.
+
+\section{Weighted Extrapolation Results}
+\label{sec:extrapolation-results}
+
+Table~\ref{tab:extrapolation} applies Equation~\ref{eq:weighted-extrapolation}
+to the common set. The naive estimate, which weights the three tiers equally,
+exceeds the population-weighted estimate by 20.0\% for GPT Image 2, 8.4\% for
+FLUX.2-dev, and 3.0\% for FLUX.2-klein-4B. The difference is largest for GPT
+Image 2 because its error rate rises most steeply towards the Long-tail tier,
+which makes up about 94\% of the weighted population. After weighting, the
+three models are almost equal, at 43.5, 43.3, and 43.0 million
+non-contradicted propositions. A stratified sample like this one therefore has
+to be reweighted before it is extrapolated, and the size of the correction
+depends on the model.
 
 \begin{table}[ht]
 \centering
 \small
-\caption{Naive versus population-weighted extrapolation of total correct facts across
-English Wikipedia ($N_{\text{total}} = 7{,}237{,}727$).}
+\caption{Naive versus population-weighted extrapolation of non-contradicted propositions over English Wikipedia ($N_{\text{total}} = 7{,}237{,}727$).}
 \label{tab:extrapolation}
 \begin{tabular}{lrrr}
 \toprule
 Model & Naive (equal-weight) & Population-weighted & Relative overstatement \\
 \midrule
-GPT Image 2 & 52.2M & 43.5M & +19.9\% \\
-FLUX.2-dev & 46.9M & 43.3M & +8.3\% \\
+GPT Image 2 & 52.2M & 43.5M & +20.0\% \\
+FLUX.2-dev & 46.9M & 43.3M & +8.4\% \\
 FLUX.2-klein-4B & 44.4M & 43.0M & +3.0\% \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-This result is itself a substantive finding: stratified sampling designed for
-statistical power, if extrapolated without reweighting, can overstate a model's
-real-world factual coverage by a model-dependent margin driven by how steeply
-that model's error rate rises toward the long tail.
+\section{Examples of Good and Bad Generations}
+\label{sec:qualitative-examples}
 
-The Long-tail tier does not
-consistently produce more propositions: counts decline for all three models,
-although only slightly for FLUX.2-klein-4B. The higher Long-tail rate for GPT
-Image 2 therefore cannot be attributed to producing more claims. The available
-evidence supports a higher error fraction among fewer claims, but it does not
-identify whether the cause is memorization, visual ambiguity, or another
-property of the entity distribution.
+The aggregate numbers do not show what a good or a bad generation looks like.
+This section shows typical cases from the corpus. They illustrate the metrics
+and are not used as additional statistical evidence.
 
-\section{Failure Cases and Refusals}
+Figure~\ref{fig:platypus} shows the three images for \emph{Platypus}, a curated
+entity with the expected type ``mammal'' and the distinctive feature ``duck-like
+bill and beaver-like tail''. The three images separate the three research
+questions. GPT Image 2 draws a brown semi-aquatic mammal with a duck-like bill
+and webbed feet: type, feature, and all six propositions are correct.
+FLUX.2-dev draws a brown semi-aquatic mammal with a flat tail but a rounded dark snout instead of a duck-like bill. The type is
+correct and none of its seven propositions contradicts the summary, but the
+feature that separates a platypus from an otter or a beaver is missing, so RQ2
+fails. FLUX.2-klein-4B draws a capybara: the type ``animal'' is still accepted,
+but the feature is missing and all five propositions are false. In the sense of
+this benchmark, a generation is good only if it passes all
+three checks, as the GPT Image 2 platypus does. For Random entities such as
+Dennis Dart (Figure~\ref{fig:problem-example}), only the third check applies,
+because they have no annotated type or feature.
 
-The missing-evaluation register contains nine GPT Image 2 entities refused by
-the provider's safety system: Mahatma Gandhi, Frida Kahlo, Salvador Dali,
-Transformers: Age of Extinction, Joker: Folie à Deux, Hugh Greenwood, Holby
-City episode 1102, Treehouse of Horror, and Edouard Wojtczak. These refusals
-cover both curated and Random entities. They are a property of the deployed
-generation service and not an observation about the visual content of a
-successful image.
+\begin{figure}[ht]
+\centering
+\begin{minipage}{0.32\textwidth}\centering
+\includegraphics[width=\linewidth]{../Code/generation/generated_images/gpt_image_2/Rare_FloraFauna/Platypus.png}\\
+\small (a) GPT Image 2
+\end{minipage}\hfill
+\begin{minipage}{0.32\textwidth}\centering
+\includegraphics[width=\linewidth]{../Code/generation/generated_images/scads_flux2_dev/Rare_FloraFauna/Platypus.png}\\
+\small (b) FLUX.2-dev
+\end{minipage}\hfill
+\begin{minipage}{0.32\textwidth}\centering
+\includegraphics[width=\linewidth]{../Code/generation/generated_images/scads_flux2_klein/Rare_FloraFauna/Platypus.png}\\
+\small (c) FLUX.2-klein-4B
+\end{minipage}
+\caption{Images generated from the prompt ``An image of Platypus.''}
+\label{fig:platypus}
+\end{figure}
 
-This distinction is important for reproducibility. The raw result CSV contains
-only successful image--model rows, so reading it without the failure register
-would make GPT Image 2 appear to have been tested on only 289 entities rather
-than on all 298 requested entities. Conversely, assigning a zero score to a
-refusal would treat a provider policy decision as factual ignorance. The present
-work reports coverage and refusal counts separately and uses the fair common set
-for the main ranking.
+Bad generations follow four recurring patterns, listed in
+Table~\ref{tab:failure-patterns}.
+
+\begin{table}[ht]
+\centering
+\footnotesize
+\caption{Recurring patterns of bad generations, with examples from the corpus.
+The last column gives false propositions out of all propositions for the image.}
+\label{tab:failure-patterns}
+\begin{tabular}{p{3.3cm}p{3.6cm}p{5.0cm}r}
+\toprule
+Pattern & Entity (model) & What the image shows & False \\
+\midrule
+Wrong referent: the name is read as something else
+ & Dennis Dart (FLUX.2-klein-4B) & a man, ``Dennis'' read as a first name & 5/5 \\
+ & Echidna (GPT Image 2) & an anime-style woman at a tea table, most likely the anime character of the same name & 8/8 \\
+ & Pretzel (GPT Image 2) & a dachshund with a name tag & 8/8 \\
+\midrule
+Near miss: a related entity of the same type
+ & Platypus (FLUX.2-klein-4B) & a capybara & 5/5 \\
+\midrule
+Wrong detail: right entity, false attribute
+ & Heath Streak (GPT Image 2) & a cricketer in a shirt with a New Zealand logo; Streak played for Zimbabwe & 1/7 \\
+\midrule
+Generic image: nothing checkable
+ & Freedom of religion in Austria (FLUX.2-dev) & an Alpine valley with the title written across it & 0/5 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The first pattern is the most severe, because the model draws a different kind
+of thing altogether. On the common set, every proposition is judged false for
+54 of 864 images (6.3\%; the three Montezuma images are excluded, see
+Section~\ref{sec:limitations}): 13 for GPT Image 2, 12 for FLUX.2-dev, and 29
+for FLUX.2-klein-4B. In 24 of these 54 images the model drew a person. The last
+pattern is the hardest to see in the numbers, because an image that asserts
+almost nothing about the entity cannot contradict the reference. The FLUX.2-dev
+image for \emph{Freedom of religion in Austria} passes every check, yet it shows
+nothing about religious freedom. For such images a hallucination rate of zero
+means ``nothing false'', not ``knowledge shown''.
 
 \clearpage
 \chapter{Discussion}
 
+This chapter interprets the results. Section~\ref{sec:answers} answers the
+research questions, Section~\ref{sec:discussion-llm} compares the findings with
+what is known about factual knowledge in language models, and
+Section~\ref{sec:implications} discusses implications and limitations.
+
 \section{Answers to the Research Questions}
+\label{sec:answers}
 
-For RQ1, all models frequently recover the coarse type of curated entities, but
-none approaches perfect recognition. The broad type is often recognized well,
-but accuracy varies substantially by domain: the models succeed on generic
-classes such as building and person, yet they struggle on culturally specific
-artifacts and foods, where the type-match performance drops to roughly
-32--40\% for GPT Image 2 and FLUX.2-dev and to 32\% for FLUX.2-klein-4B.
-This indicates that broad category recognition is not uniformly strong across the
-benchmark's semantic domains.
+\textbf{RQ1.} The three models draw the correct coarse type for 73--79\% of
+the 97 curated entities of the common set, and the differences between them
+are not significant. Type recognition is close to perfect for flora and fauna
+(92--100\%) and lowest for cultural artifacts and foods (32--40\%); the latter
+mainly reflects the generic label ``Object'' assigned in the blind call,
+as the much higher feature rates for this category show
+(Section~\ref{sec:rq12-results}).
 
-For RQ2, the ranking changes sharply: GPT Image 2 has the highest
-distinctive-feature rate in Table~\ref{tab:fair-overall}, while FLUX.2-klein-4B
-is substantially weaker. The gap is striking: FLUX.2-klein-4B decreases from
-73.2\% on RQ1 to only 28.9\% on RQ2, while GPT Image 2 remains at 62.9\% and
-FLUX.2-dev at 46.4\%. This demonstrates that understanding the broad class is
-much easier than identifying the unique visual evidence that distinguishes the
-entity from nearby competitors.
+\textbf{RQ2.} The models differ strongly in whether they show what
+distinguishes an entity from similar ones: GPT Image 2 does so for 62.9\% of
+the curated entities, FLUX.2-dev for 46.4\%, and FLUX.2-klein-4B for 28.9\%.
+The gap between RQ1 and RQ2 is largest for the smallest model, which
+recognizes the type of 73.2\% of the entities but shows the distinctive
+feature for fewer than a third. For these models, knowing the class of an
+entity is much easier than knowing how it differs from its neighbours, as the
+Platypus example shows (Figure~\ref{fig:platypus}).
 
-For RQ3, the models express propositions that are not supported by the reference
-summaries. GPT Image 2 and FLUX.2-dev have similar normalized hallucination
-rates in Table~\ref{tab:fair-overall}, whereas FLUX.2-klein-4B has nearly
- twice the rate of either model. The popularity split shows a clearer
-popularity-dependent hallucination effect for GPT Image 2: its hallucination rate
-rises from 3.0\% for Famous entities to 23.0\% for Long-tail entities. The two
-FLUX models show partial or non-monotonic patterns, with FLUX.2-dev dropping to
-8.0\% at Medium before rising to 14.6\% at Long-tail and FLUX.2-klein-4B
-remaining the most error-prone model across the full tier range. Unlike the
-demographic factuality tax described by DoFaiR~\citep{dofair2024}, this
-popularity-related effect concerns entity obscurity rather than diversity
-interventions. Long-tail entities are therefore not merely harder because they
-contain more claims; in several cases they contain fewer claims but a higher
-fraction of unsupported claims. This supports the interpretation that the
-challenge is not only verbosity but also the failure to ground the image in the
-correct entity-specific visual evidence.
+\textbf{RQ3.} Of the propositions extracted from the images, 91.0\% (GPT
+Image 2), 90.3\% (FLUX.2-dev), and 82.3\% (FLUX.2-klein-4B) are not
+contradicted by the lead summary. This share is an upper bound on the share of
+true propositions, because the judge cannot confirm what the lead summary does
+not mention. For GPT Image 2 the share of false propositions grows from 3.0\%
+for Famous to 23.0\% for Long-tail entities, although its Long-tail images
+contain fewer propositions; nine of its 13 images in which every proposition is
+false are Long-tail entities. Its errors on rare entities thus come from
+drawing the wrong thing, not from describing more. The FLUX models show no
+consistent popularity effect.
+
+\section{Comparison with Knowledge in Language Models}
+\label{sec:discussion-llm}
+
+The population-weighted extrapolation in Table~\ref{tab:extrapolation} puts
+the number of non-contradicted visual propositions over all English Wikipedia articles
+at about 43~million for each model. This is the same order of magnitude as the
+101~million triples that GPTKB extracts from GPT-4o-mini~\citep{gptkb2025}, but
+the two numbers measure different things. GPTKB covers 2.9~million entities with
+about 35 triples each; the extrapolation assumes one image with about six
+non-contradicted propositions for each of 7.2~million articles. About a third of these
+propositions describe the scene or transcribe text rather than the entity
+(Section~\ref{sec:visual-facts}), so the entity-related part is closer to 25--30
+million. Finally, a GPTKB triple is a relational fact elicited by many prompts,
+whereas a proposition is only what one image happens to show.
+
+The per-model results nevertheless point in the direction known from language
+models. The three generators recognize the coarse type about equally often
+(73--79\%, no significant difference), but differ strongly on distinctive
+features (63\%, 46\%, and 29\%). The RQ2 ranking follows model size: GPT Image 2, whose size is undisclosed but
+whose predecessor was built into GPT-4o, ranks first; FLUX.2-dev, with a 24B
+language model and a 32B image transformer, ranks second; FLUX.2-klein-4B, with
+4B parameters in each component, ranks last. With three models this is an
+observation and not a scaling result, because size, training data, and
+architecture change together, and the two FLUX models differ in both
+components at once. It is consistent with the view that coarse types are
+available even to small models, while entity-specific visual detail requires
+more capacity. The popularity effect for GPT Image 2
+(Table~\ref{tab:tier-hallucination}) likewise resembles the drop in LLM accuracy
+for rare entities~\citep{mallen2023,kandpal2023}.
 
 \section{Implications and Limitations}
+\label{sec:implications}
 
 \subsection{Implications}
 
 Visual plausibility is insufficient for using T2I outputs in knowledge-oriented
 settings. A generated image may get the entity type right while failing to
 include the feature that makes the entity recognizable. Conversely, an image can
-look detailed while containing unsupported contextual elements. Proposition-level
+look detailed while containing false contextual details. Proposition-level
 checking is therefore a useful complement to image-quality metrics.
 
-The concrete and abstract examples discussed in Section~\ref{sec:qualitative-examples}
-also show that
-factuality evaluation depends on how directly an entity can be visualized. This
-supports treating the benchmark score as evidence about reference-grounded
-visual propositions, rather than as a complete measure of semantic understanding.
-
-The asymmetry is especially important for abstract entities. T2I models tend to
-visualize abstract concepts such as Freedom of religion in Austria through broad
-landscapes, infographics, or typographic overlays rather than through a single,
-iconic, visually grounded representation. This can artificially depress the
-Hallucination\_Rate because the abstract image does not directly contradict the
-reference text in the same way that a concrete object does. By contrast,
-concrete entities such as Dennis Dart are much easier to test: a bus-like object
-that is not the specified model produces multiple explicit factual conflicts
-with the reference summary and therefore raises the hallucination count.
+The examples in Section~\ref{sec:qualitative-examples} also show that the
+benchmark score depends on how directly an entity can be drawn. For a concrete
+entity such as Dennis Dart, a wrong image produces several explicit
+contradictions: a hand-held device or a portrait of a man cannot be a bus
+chassis. For an abstract entity such as Freedom of religion in Austria, models
+draw landscapes or captioned scenes that contradict nothing in the summary.
+The hallucination rate should therefore be read as a measure of false visual
+statements, not as a measure of how much the image shows about the entity.
 
 \subsection{Limitations}
 \label{sec:limitations}
 
-As discussed in Section~\ref{sec:qualitative-examples}, concrete entities such as Dennis Dart provide a
-relatively strict visual test, whereas abstract entities such as Freedom of
-religion in Austria, English folklore, or Dené--Caucasian languages are harder
-to evaluate visually. Their low hallucination count can therefore underestimate
-the absence of useful evidence. RQ3 should be read as reference-grounded
-contradiction detection, not as a complete measure of whether an abstract
-concept was successfully visualized.
+\paragraph{What RQ3 measures.} The judge counts propositions that the reference
+shows to be false. Propositions that the lead summary does not mention are not
+counted, so the complement of the hallucination rate is an upper bound on the
+share of true propositions. For abstract entities, whose images assert little
+that the summary could contradict, a low hallucination count does not show that
+the concept was visualized (Section~\ref{sec:qualitative-examples}).
 
-The safety refusals are a separate availability constraint, not a factual error.
-They also create a systematic selection bias: GPT Image 2 has fewer scored
-entities precisely because its provider applies content-policy filtering, while
-the FLUX services did not produce the same missing rows. The affected names
-include historical figures such as Mahatma Gandhi, Frida Kahlo, and Salvador
-Dali, so the missingness is not necessarily independent of entity type or
-content. The fair common set prevents these refusals from being converted into
-zero factuality scores, but it cannot remove the fact that conclusions about
-the commercial model apply only to the successfully generated subset.
-The judge model, \texttt{gemma-4-31B-it}, is a smaller and less capable
-vision-language model than the large proprietary judges used in related
-factuality benchmarks such as TIFA~\citep{tifa2023}. This may affect the
-absolute precision of type, feature, and proposition judgments, particularly
-for fine-grained visual distinctions. The comparative rankings between the
-three generation models are expected to be more robust to this choice than the
-absolute percentages reported in Table~\ref{tab:fair-overall}, since all three
-generation models were scored by the same judge under identical conditions. The
-benchmark is also deliberately stratified and does not reproduce the natural
-distribution of Wikipedia entities. The factual reference is a Wikipedia lead
-summary, so a visible detail may be true while absent from the summary. The VLM
-judge can make classification errors, and the curated subset is relatively
-small. Finally, proposition count is only a proxy for visual information
-density: a longer description is not necessarily more informative, and a shorter
-one is not necessarily more accurate.
+\paragraph{Judge.} All decisions are made by one open-weight model,
+\texttt{gemma-4-31B-it}, which is smaller than proprietary evaluators such as
+GPT-4V~\citep{gpt4v2024}, and its decisions were not validated against human
+judgements. The judge is also not fully consistent: it accepted the label
+``Object'' as a type match for artifacts and foods in 27 of 64 cases and
+rejected it in the others. Since all three generators were scored by the same
+judge, the ranking of the models is expected to be more robust than the
+absolute percentages.
+
+\paragraph{Reference.} The Wikipedia lead summary is short, so a visible
+detail can be true without being mentioned. Title resolution also picked the
+wrong article for two curated entities: ``Montezuma'' resolved to a small
+community in New Mexico and ``Ada Lovelace'' to an Nvidia GPU architecture. For
+Montezuma, all three models drew an Aztec ruler with a feathered headdress, but
+the judge marked the type as wrong and counted 8, 8, and 9 hallucinations.
+Correcting this entity would raise each model's RQ1 rate by about one
+percentage point and lower each overall hallucination rate by about 0.4 points;
+the ranking of the models does not change. The Random entity ``Stardust'' is
+probably affected in the same way.
+
+\paragraph{Blind call.} The blind call does not see the prompt, but it does see
+any text written inside the image. Models often write the entity name into the picture:
+this happens in about 47\% of the GPT Image 2 images, 24\% of the FLUX.2-dev
+images, and 14\% of the FLUX.2-klein-4B images (keyword count). In these cases
+the judge can read the name, which makes RQ1 easier than intended and
+favours GPT Image 2 most.
+
+\paragraph{Sample.} The curated subset is small (97 entities in the common set)
+and was annotated by one person. Each entity was generated once per model
+without a fixed seed, so the results do not capture the variation between
+repeated generations. The Random subset is stratified by design and does not
+reproduce the distribution of Wikipedia; Section~\ref{sec:weighted-extrapolation}
+corrects for this only in the extrapolation.
+
+\paragraph{Refusals.} GPT Image 2 refused nine prompts, including three
+historical figures. The common set keeps these refusals from being scored as
+errors, but conclusions about GPT Image 2 apply only to the entities it
+generated, and the missing entities are not a random sample.
+
+\paragraph{Proposition count.} The number of propositions is only a proxy for
+how much an image shows: a longer description is not necessarily more
+informative, and a shorter one is not necessarily more accurate.
 
 \chapter{Conclusion and Future Work}
 
-This thesis introduced a benchmark for measuring factual knowledge in T2I models.
-It evaluated type recognition, distinctive feature presence, and the truthfulness
-of atomic visual propositions under a zero-context prompt. The experiments show
-that T2I models contain non-trivial factual knowledge, but that this knowledge is
-uneven across entity types and popularity tiers. Correct coarse type recognition
-does not guarantee correct entity-specific features, and visually detailed images
-can contain unsupported facts.
+This thesis introduced a benchmark for the factual knowledge of text-to-image
+models and applied it to GPT Image 2, FLUX.2-dev, and FLUX.2-klein-4B. Three
+findings stand out. First, recognizing the type of an entity is not the same as
+knowing it: the models draw the correct type for 73--79\% of the curated
+entities, but the distinctive feature for only 29--63\%. Second, 9--18\% of the
+visual propositions contradict the lead summary, and for GPT Image 2 this share
+grows from 3\% for popular to 23\% for rare entities. Third, the most severe
+errors come from reading the entity name as something else, such as a man
+called Dennis instead of a bus model; the image then looks convincing and is
+entirely wrong. Compared with language models, whose factual knowledge has been
+materialized at the scale of $10^8$ triples, the knowledge of image generators
+is harder to elicit and limited to what can be drawn.
 
-Future work should use multiple independent judges and human verification for a
-sample of propositions. Reference information could be expanded beyond
-Wikipedia leads to distinguish a false fact from a fact omitted by the summary.
-The benchmark could also include repeated generations per entity, confidence
-intervals, and additional models. A larger and naturally sampled Long-tail set
-would allow stronger conclusions about factual knowledge across the distribution
-of knowledge-base entities.
+Future work should validate the judge against human annotations on a sample of
+propositions and use more than one judge. A longer reference than the Wikipedia
+lead would separate false propositions from unmentioned ones. Repeated
+generations per entity, a closed label set for the blind call, more
+models, and a larger, naturally sampled Long-tail set would allow stronger
+conclusions.
 
 \appendix
 \chapter{Supplementary Evaluation Information}
@@ -957,7 +1165,7 @@ Entity & Recorded reason \\
 \midrule
 Mahatma Gandhi & Safety refusal \\
 Frida Kahlo & Safety refusal \\
-Salvador Dali & Safety refusal \\
+Salvador Dal\'{i} & Safety refusal \\
 Transformers: Age of Extinction & Safety refusal \\
 Joker: Folie à Deux & Safety refusal \\
 Hugh Greenwood & Safety refusal \\
@@ -974,13 +1182,78 @@ The benchmark entities are stored in the entity CSV. Generated images are
 organized by model and category. The evaluation results contain one row per
 successful entity--model pair, and the full benchmark release includes the
 analysis script, the evaluation outputs, and the generated image folders. The
-analysis script regenerates coverage tables, fair comparisons, tier-level
+analysis script regenerates coverage tables, common-set comparisons, tier-level
 hallucination tables, proposition-count tables, correlations, and figures from
 these inputs. This separation between raw rows and derived tables allows the
 reported values to be recomputed after changing a metric or adding another model.
 
+The generation script uses ten concurrent workers and skips existing files, but
+it does not record per-request durations. The evaluation log records a
+wall-clock run from 13 August 2026 23:05:48 to 14 August 2026 03:02:26 for the
+766 queued image tasks, approximately 3 hours 57 minutes including Wikipedia
+prefetching and retries. This is a reproducibility observation for that run,
+not a general speed benchmark; request latency depends on provider load,
+concurrency, and retries.
+
 The public code and generated assets are available at
 \url{https://github.com/mrEkso/t2i-factuality-benchmark}.
+
+\section{Judge Prompts}
+\label{sec:judge-prompts}
+
+Both calls use \texttt{gemma-4-31B-it} with temperature~0, JSON output, and the
+system message ``You are a strict JSON-only API. Always return valid JSON
+without markdown wrapping.'' Placeholders are shown in angle brackets.
+
+\paragraph{Call 1 (blind).} The image is attached to the message.
+{\small
+\begin{verbatim}
+You are an objective computer-vision classifier. You are NOT told what
+this image is supposed to depict - judge only what is visually present.
+
+Output a raw JSON object with exactly these keys:
+1. "predicted_type": The primary object type shown (e.g., Building,
+   Person, Animal, Landscape, Object, None).
+2. "description": A brief text description of the main visual elements.
+3. "propositions": A list of short, atomic factual claims about what is
+   visually shown (e.g., ["The building has a round tower", "There is a
+   river in the foreground"]).
+\end{verbatim}
+}
+
+\paragraph{Call 2 (grounded, curated entities).} No image is attached. For
+Random entities, the expected type and feature and keys 1 and 2 are omitted.
+{\small
+\begin{verbatim}
+You are a strict fact-checking judge. You are given:
+- The real-world entity name: "<entity>"
+- Reference text about this entity (from its Wikipedia summary):
+  """<Wikipedia lead summary>"""
+- An expected object type for this entity: "<expected type>"
+- An expected unique feature for this entity: "<expected feature>"
+- Visual observations made by a separate, blind image classifier (it did
+  NOT know the entity name), about a generated image that is supposed to
+  depict this entity:
+  predicted_type = "<predicted type>"
+  description = "<description>"
+  propositions = [<propositions>]
+
+Using ONLY the ground truth text above (plus general knowledge only if
+the ground truth text is marked unavailable), output a raw JSON object
+with exactly these keys:
+
+1. "rq1_type_match": Boolean. Does predicted_type match the expected
+   reality of "<entity>"?
+2. "rq2_feature_present": Boolean or null. Do the propositions/description
+   clearly indicate the feature "<expected feature>"? If expected_feature
+   is "N/A", output null.
+3. "rq3_hallucinations_count": Integer. How many propositions are FALSE
+   or contradicted by the ground truth text?
+4. "rq3_hallucinations_details": Short string explaining which
+   propositions are wrong, or "None" if all are consistent with the
+   ground truth.
+\end{verbatim}
+}
 
 \bibliographystyle{template/acl_natbib}
 \bibliography{references}

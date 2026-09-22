@@ -53,8 +53,21 @@ EXTRAPOLATION_TIER_WEIGHTS = {"Famous": 1 / 3, "Medium": 1 / 3, "Long-tail": 1 /
 
 # Real-world proportions used for the final reweighted table. These values are
 # derived from the Wikipedia article distribution (Famous, Medium, Long-tail).
-REAL_WIKIPEDIA_TIER_WEIGHTS = {"Famous": 0.0032, "Medium": 0.0535, "Long-tail": 0.9433}
+REAL_WIKIPEDIA_TIER_WEIGHTS = {"Famous": 0.0032, "Medium": 0.053, "Long-tail": 0.943}
 TIER_ORDER = ["Famous", "Medium", "Long-tail"]
+
+MODEL_LABELS = {
+    "gpt_image_2": "GPT Image 2",
+    "scads_flux2_dev": "FLUX.2-dev",
+    "scads_flux2_klein": "FLUX.2-klein-4B",
+}
+MODEL_ORDER = ["GPT Image 2", "FLUX.2-dev", "FLUX.2-klein-4B"]
+CATEGORY_LABELS = {
+    "Famous Landmarks & Architecture": "Landmarks &\nArchitecture",
+    "Historical Figures": "Historical\nFigures",
+    "Rare Flora/Fauna": "Rare\nFlora/Fauna",
+    "Specific Cultural Artifacts/Foods": "Cultural\nArtifacts/Foods",
+}
 
 
 def wilson_interval(successes, trials, z=1.96):
@@ -380,17 +393,21 @@ def compute_fact_analysis(df, output_suffix=""):
     correlations = pd.DataFrame(correlations)
     correlations.to_csv(OUT_DIR / f"rq3_fact_count_correlations{output_suffix}.csv", index=False)
 
+    _plot_propositions_by_tier(by_tier, output_suffix)
+    return by_tier
+
+
+def _plot_propositions_by_tier(by_tier, output_suffix):
     pivot = by_tier.pivot(index="Popularity_Tier", columns="Model", values="Avg_Propositions")
-    pivot = pivot.reindex(TIER_ORDER)
-    ax = pivot.plot(kind="bar", figsize=(9, 5), rot=0)
-    ax.set_title("Average Number of Generated Facts by Popularity Tier")
+    pivot = pivot.reindex(TIER_ORDER).rename(columns=MODEL_LABELS)[MODEL_ORDER]
+    ax = pivot.plot(kind="bar", figsize=(8, 4.2), rot=0, width=0.8)
     ax.set_ylabel("Average propositions per image")
     ax.set_xlabel("Popularity tier")
-    ax.legend(title="Model")
+    ax.set_ylim(0, 10.5)
+    ax.legend(ncol=3, loc="upper center", frameon=False)
     plt.tight_layout()
-    plt.savefig(OUT_DIR / f"rq3_average_facts_by_tier{output_suffix}.png", dpi=150)
+    plt.savefig(OUT_DIR / f"rq3_average_facts_by_tier{output_suffix}.png", dpi=200)
     plt.close()
-    return by_tier
 
 
 def write_limitations(df, fair_df, failures_csv, entities_csv):
@@ -491,19 +508,45 @@ def compute_reweighted_extrapolation(rq3_tier):
     return reweighted
 
 
-def plot_grouped_bar(table, value_col, category_col, title, ylabel, out_name):
+def plot_grouped_bar(table, value_col, category_col, ylabel, out_name):
     """Save a grouped bar chart for a score split by category and model."""
-    # Pivot makes categories the x-axis and models the separate bars.
     pivot = table.pivot(index=category_col, columns="Model", values=value_col)
-    ax = pivot.plot(kind="bar", figsize=(9, 5), rot=20)
-    ax.set_title(title)
+    pivot = pivot.rename(columns=MODEL_LABELS, index=CATEGORY_LABELS)[MODEL_ORDER]
+    ax = pivot.plot(kind="bar", figsize=(8, 4.2), rot=0, width=0.8)
     ax.set_ylabel(ylabel)
-    ax.set_xlabel(category_col)
-    ax.set_ylim(0, 1.0)
-    ax.legend(title="Model")
+    ax.set_xlabel("")
+    ax.set_ylim(0, 1.12)
+    ax.legend(ncol=3, loc="upper center", frameon=False)
     plt.tight_layout()
-    plt.savefig(OUT_DIR / out_name, dpi=150)
+    plt.savefig(OUT_DIR / out_name, dpi=200)
     plt.close()
+
+
+def compute_extrapolation_common_set(fair_fact_by_tier):
+    """Naive (equal-weight) and population-weighted extrapolation on the common set.
+
+    Non-contradicted propositions per image = Avg_Propositions * (1 - pooled hallucination rate).
+    This counts every proposition the judge did not mark as false, including scene and
+    text propositions, so it is an upper bound on correct entity facts.
+    """
+    t = fair_fact_by_tier.copy()
+    t["Non_Contradicted"] = t["Avg_Propositions"] * (1 - t["Hallucination_Rate"])
+    rows = []
+    for model, g in t.groupby("Model"):
+        g = g.set_index("Popularity_Tier")
+        naive = sum(EXTRAPOLATION_TIER_WEIGHTS[k] * g.loc[k, "Non_Contradicted"] for k in TIER_ORDER)
+        weighted = sum(REAL_WIKIPEDIA_TIER_WEIGHTS[k] * g.loc[k, "Non_Contradicted"] for k in TIER_ORDER)
+        rows.append({
+            "Model": MODEL_LABELS.get(model, model),
+            "Naive_Total": naive * WIKIPEDIA_TOTAL_ARTICLES,
+            "Weighted_Total": weighted * WIKIPEDIA_TOTAL_ARTICLES,
+            "Relative_Overstatement": naive / weighted - 1,
+            "Extrapolation_Set": "common set",
+        })
+    out = pd.DataFrame(rows)
+    out.to_csv(OUT_DIR / "rq3_extrapolation_common_set.csv", index=False)
+    print("RQ3 - Extrapolation on the common set:\n", out, "\n")
+    return out
 
 
 def plot_hallucination_tax_line(rq3_tier):
@@ -549,17 +592,16 @@ def main():
     fair_fact_by_tier = compute_fact_analysis(fair_df, "_fair")
     write_limitations(df, fair_df, args.failures_csv, args.entities_csv)
 
-    plot_grouped_bar(
-        rq1_cat, "Type_Match_Rate", "Category",
-        "RQ1: Object Type Prediction Accuracy by Category", "Type match rate",
-        "rq1_type_match_by_category.png",
-    )
-    plot_grouped_bar(
-        rq2_cat, "Feature_Present_Rate", "Category",
-        "RQ2: Descriptive Feature Presence by Category", "Feature present rate",
-        "rq2_feature_present_by_category.png",
-    )
-    plot_hallucination_tax_line(fair_fact_by_tier)
+    fair_curated = fair_df[fair_df["RQ1_Type_Match"].notna()]
+    rq1_cat_fair = (fair_curated.groupby(["Category", "Model"])["RQ1_Type_Match"]
+                    .mean().rename("Type_Match_Rate").reset_index())
+    rq2_cat_fair = (fair_curated.groupby(["Category", "Model"])["RQ2_Feature_Present"]
+                    .mean().rename("Feature_Present_Rate").reset_index())
+    plot_grouped_bar(rq1_cat_fair, "Type_Match_Rate", "Category",
+                     "Type match rate", "rq1_type_match_by_category.png")
+    plot_grouped_bar(rq2_cat_fair, "Feature_Present_Rate", "Category",
+                     "Feature present rate", "rq2_feature_present_by_category.png")
+    compute_extrapolation_common_set(fair_fact_by_tier)
     print(f"Charts written to {OUT_DIR}/")
 
 

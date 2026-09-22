@@ -1,24 +1,23 @@
 % !TeX root = ../main.tex
 \addchap*{Abstract}
-Text-to-image (T2I) models can produce visually convincing images from short
-natural-language prompts, but visual plausibility does not imply factual
-knowledge. This thesis presents a benchmark for measuring the factual knowledge
-of T2I models about real-world entities. The benchmark contains curated entities
-from four domains and randomly sampled entities divided into Famous, Medium, and
-Long-tail popularity tiers. Each entity is rendered from the same zero-context
-prompt, ``An image of [entity].'' Images are evaluated with a blind visual
-question-answering pipeline. The evaluation measures whether the model depicts
-the correct entity type, whether it includes a distinctive descriptive feature,
-and how many atomic visual propositions are hallucinated when compared with a
-Wikipedia lead summary.
-
-Three image-generation models are compared: GPT Image 2, FLUX.2-dev, and
-FLUX.2-klein-4B. The final dataset contains 885 successful evaluations. On the
-common set of 289 entities, GPT Image 2 reaches the lowest overall hallucination
-rate, while FLUX.2-klein-4B produces the highest rate. For curated entities, the
-best type-match rate is obtained by FLUX.2-dev, whereas GPT Image 2 performs best
-on distinctive feature presence. Hallucination rates vary strongly by popularity
-tier, with Long-tail entities generally producing fewer visual propositions and
-more unsupported facts. The results show that T2I models contain measurable,
-domain-dependent factual knowledge, but that their outputs should not be treated
-as reliable factual representations without explicit verification.
+Text-to-image (T2I) models produce convincing images from short prompts, but a
+convincing image is no evidence that the model knows the depicted entity. This
+thesis measures the factual knowledge of three T2I models, GPT Image 2,
+FLUX.2-dev, and FLUX.2-klein-4B, about 298 real-world entities: 100 curated
+entities from four domains, each annotated with an expected type and a
+distinctive visual feature, and 198 randomly sampled Wikipedia entities in three
+popularity tiers. Every entity is generated from the prompt ``An image of
+[entity].'' A vision-language model, used as a judge, first describes each image without
+knowing which entity it should show and lists short statements about what is
+visible, called propositions; a second call checks these statements against the
+introduction of the entity's Wikipedia article. On the 289 entities
+available for all models, the models draw the correct coarse type for 73--79\%
+of the curated entities, but the distinctive feature for only 63\% (GPT
+Image 2), 46\% (FLUX.2-dev), and 29\% (FLUX.2-klein-4B). Of the extracted
+propositions, 9.0\%, 9.7\%, and 17.7\% contradict the reference; for GPT
+Image 2 this share rises from 3\% for the most popular to 23\% for the least
+popular entities. The most severe errors come from reading the entity name as
+something else, such as a portrait of a man for the British bus model Dennis
+Dart. Unlike language models, image generators cannot abstain, and their
+knowledge is limited to what can be drawn. Their outputs should therefore not
+be used as factual depictions without verification.
