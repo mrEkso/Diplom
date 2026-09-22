@@ -1,0 +1,12 @@
+# Fdb version 4
+["pdflatex"] 1789842612.37532 "/Users/main/Documents/Diplom/Template/main.tex" "main.pdf" "main" 1789842612.70431 2
+  "/Users/main/Documents/Diplom/Template/main.tex" 1786184105.97482 217 14bc25907080a3afb9596501598cd440 ""
+  "/Users/main/Library/Application Support/MiKTeX/texmfs/data/miktex/data/le/pdftex/pdflatex.fmt" 1786180516.00489 10168374 6bbb5eabcbe8cabe0e7a7929dbc6dea0 ""
+  "Template/main.tex" 1786184105.97482 217 14bc25907080a3afb9596501598cd440 ""
+  "main.aux" 1789842604.37486 32 3985256e7290058c681f74d7a3565a19 "pdflatex"
+  "parts/head.tex" 0 -1 0 ""
+  (generated)
+  "main.aux"
+  "main.log"
+  "main.pdf"
+  (rewritten before read)

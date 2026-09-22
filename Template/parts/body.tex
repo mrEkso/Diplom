@@ -23,7 +23,9 @@ developed by Brinster~\citep{brinster2025}, but changes the objective from
 illustrating a large knowledge base to measuring what image-generation models
 know about individual entities. The benchmark uses identical zero-context
 prompts for all models, preventing the prompt from providing the facts being
-measured.
+measured. Here, a zero-context prompt means that the model receives only the
+entity name and no Wikipedia text, feature hints, or additional descriptive
+context.
 
 A core methodological difference between language and image generation is the
 obligation to produce a result. Large language models can often decline to answer
@@ -85,8 +87,12 @@ numbers of visual claims per image.
 This thesis contributes a benchmark for factual knowledge in text-to-image
 models, together with a reproducible generation and evaluation pipeline. The main
 contributions are fourfold. First, it introduces a benchmark of 298 real-world
-entities, composed of curated categories and a Random subset with Famous,
-Medium, and Long-tail popularity tiers. Second, it generates a public dataset of
+entities, composed of a curated subset with manually annotated type and feature
+labels and a Random subset stratified by article popularity. The Random subset is
+split into three popularity tiers: Famous, Medium, and Long-tail. These tiers
+are defined from English Wikipedia article length and visibility, so the
+Long-tail tier refers to the least visible, shortest-article entities rather than
+a generic label for any obscure entity. Second, it generates a public dataset of
 images for each entity under a controlled, zero-context prompt using three T2I
 models: GPT Image 2, FLUX.2-dev, and FLUX.2-klein-4B. Third, it evaluates the
 results with a blind two-stage VLM pipeline that measures coarse type match,
@@ -234,11 +240,14 @@ studied by DoFaiR~\citep{dofair2024}, the present benchmark focuses on the
 entity-popularity dimension: whether a model becomes increasingly error-prone as
 names become less common, less canonical, and harder to ground visually.
 
-The Long-tail setting matters because entity popularity is strongly associated
-with the amount of training signal and the number of easily recognizable visual
-patterns. Rare or niche entities are less likely to be represented by a canonical
-image in the training data, which makes factuality more brittle even when the
-output remains visually coherent.
+The Long-tail setting is the lowest-popularity tier of the Random subset in this
+benchmark. It is defined by short English Wikipedia article length and therefore
+corresponds to the least visible and least canonical entities in the sample, not
+by an ad hoc label or a vague sense of rarity. This setting matters because
+entity popularity is strongly associated with the amount of training signal and
+the number of easily recognizable visual patterns. Rare or niche entities are
+less likely to be represented by a canonical image in the training data, which
+makes factuality more brittle even when the output remains visually coherent.
 
 \chapter{Methodology}
 
@@ -249,11 +258,27 @@ Famous Landmarks and Architecture, Historical Figures, Rare Flora and Fauna, and
 Specific Cultural Artifacts and Foods. Each domain contains 25 entities, giving
 100 curated entities. The remaining 198 entities form the Random subset, divided
 into three equal popularity tiers. The tier label is part of the released entity
-metadata and is accompanied by the \texttt{Wiki\_Length} field, the stored length of the
-corresponding English Wikipedia article. Famous, Medium, and Long-tail are
-therefore dataset strata based on the popularity proxy used during entity
-collection, not claims about the exact natural frequency of entities in
-Wikipedia. Each tier contains 66 entities so that no tier dominates the sample.
+metadata and is accompanied by the \texttt{Wiki\_Length} field, the raw MediaWiki
+article length in characters for the corresponding English-language article.
+This is the exact operationalization used during collection: we did not assign
+tiers by token counts, word counts, or model-tokenization heuristics. The
+thresholds were: Famous: $\geq 100{,}000$ characters; Medium: $20{,}000$ to
+$<100{,}000$ characters; Long-tail: $500$ to $<20{,}000$ characters. Famous,
+Medium, and Long-tail are therefore dataset strata based on Wikipedia article
+length as a popularity proxy, not claims about the exact natural frequency of
+entities in Wikipedia. Each tier contains 66 entities so that no tier dominates
+the sample.
+
+This choice is scientifically defensible because article length is a cumulative
+signal of public attention and knowledge elaboration. High-popularity topics draw
+more editors, more references, more cross-links, and more repeated revisions,
+which steadily expands the article text. In Wikipedia, article size therefore
+tracks the amount of public attention and the depth of available documentation,
+not merely the semantic importance of the topic in an abstract sense. A shorter
+article is not automatically less "real" or less important; it is usually a
+marker of lower visibility and less accumulated descriptive material. This is
+why article length is a useful, but imperfect, proxy for popularity in a
+knowledge base.
 
 For curated entities, the benchmark provides an expected type and a distinctive
 feature. For Random entities, these fields are intentionally undefined.
@@ -338,11 +363,6 @@ interrupted runs can be resumed without duplicating requests.
 
 Figure~\ref{fig:benchmark-pipeline} summarizes the full workflow from entity list
 to final metrics.
-
-Figure~\ref{fig:hallu-tier} visualizes the same normalized hallucination-rate
-values as Table~\ref{tab:tier-hallucination}.
-
-Figure~\ref{fig:fact-tier} reports the separate proposition-count analysis.
 
 \begin{figure}[ht]
 \centering
@@ -507,16 +527,21 @@ naive extrapolation that averages the three tier-level correct-fact rates with
 weight $1/3$ would systematically misrepresent the population.
 
 To correct for this, tier population shares $w_t$ were estimated from
-Wikipedia's own published article-length statistics~\citep{wikipediaarticlesize2026},
-converted from word counts to the byte-based length cutoffs used to define the
-benchmark's tiers (Famous: $>100{,}000$ bytes; Medium: $20{,}000$--$100{,}000$
-bytes; Long-tail: $500$--$20{,}000$ bytes) via an approximate wikitext overhead
-factor of 7 bytes per displayed word. Approximately 32\% of English Wikipedia
-articles are classified as stubs~\citep{wikipediastub2026}, consistent with the
-estimate that Long-tail articles dominate the encyclopedia. Under this
-conversion, the three tiers used in the benchmark correspond to approximately
-0.32\% (Famous), 5.3\% (Medium), and 94.3\% (Long-tail) of the population
-within that length range once renormalized over the three tiers.
+Wikipedia's own published article-length statistics~\citep{wikipediaarticlesize2026}
+using the same cutoffs as the benchmark's tiering rule on the raw MediaWiki
+length field: Famous: $\geq 100{,}000$ characters; Medium: $20{,}000$ to
+$<100{,}000$ characters; Long-tail: $500$ to $<20{,}000$ characters.
+These are not token counts and not model-token estimates; they are the actual
+article-length thresholds used to create the benchmark strata. For the
+population reweighting we converted these cutoffs to an approximate word-count
+scale only as a notional back-of-the-envelope step, via a rough factor of 7
+bytes per visible word; this is used only to interpret the encyclopedia-level
+shares, not to define the benchmark tiers themselves. Approximately 32\% of
+English Wikipedia articles are classified as stubs~\citep{wikipediastub2026},
+consistent with the estimate that Long-tail articles dominate the encyclopedia.
+Under this conversion, the three tiers correspond to approximately 0.32\%
+(Famous), 5.3\% (Medium), and 94.3\% (Long-tail) of the population within that
+length range once renormalized over the three tiers.
 
 The weighted extrapolation for model $m$ is
 

@@ -1,0 +1,4 @@
+PWD /Users/main/Documents/Diplom
+INPUT /Users/main/Library/Application Support/MiKTeX/texmfs/data/miktex/data/le/pdftex/pdflatex.fmt
+INPUT /Users/main/Documents/Diplom/Template/main.tex
+OUTPUT main.log
