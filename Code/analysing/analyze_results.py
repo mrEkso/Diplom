@@ -55,6 +55,8 @@ EXTRAPOLATION_TIER_WEIGHTS = {"Famous": 1 / 3, "Medium": 1 / 3, "Long-tail": 1 /
 # derived from the Wikipedia article distribution (Famous, Medium, Long-tail).
 REAL_WIKIPEDIA_TIER_WEIGHTS = {"Famous": 0.0032, "Medium": 0.053, "Long-tail": 0.943}
 TIER_ORDER = ["Famous", "Medium", "Long-tail"]
+# Entities whose Wikipedia title resolved to the wrong article (see thesis, Limitations).
+MISRESOLVED_ENTITIES = {"Montezuma"}
 
 MODEL_LABELS = {
     "gpt_image_2": "GPT Image 2",
@@ -549,6 +551,77 @@ def compute_extrapolation_common_set(fair_fact_by_tier):
     return out
 
 
+def compute_extrapolation_diagnostics(fair_df, fair_fact_by_tier):
+    """Explain why the weighted extrapolation hardly separates the models.
+
+    Writes three tables used in the critical assessment of the methodology:
+    the contribution of each tier to the weighted total, non-contradicted
+    propositions on the curated subset split by RQ2 outcome, and the spread of
+    proposition counts together with the zero-hallucination share for persons.
+    """
+    t = fair_fact_by_tier.copy()
+    t["Non_Contradicted_Per_Image"] = t["Avg_Propositions"] * (1 - t["Hallucination_Rate"])
+    t["Weight"] = t["Popularity_Tier"].map(REAL_WIKIPEDIA_TIER_WEIGHTS)
+    t["Weighted_Contribution"] = t["Weight"] * t["Non_Contradicted_Per_Image"]
+    t["Share_Of_Weighted_Total"] = (
+        t["Weighted_Contribution"] / t.groupby("Model")["Weighted_Contribution"].transform("sum")
+    )
+    t["Model"] = t["Model"].map(MODEL_LABELS).fillna(t["Model"])
+    contributions = t[[
+        "Model", "Popularity_Tier", "Avg_Propositions", "Hallucination_Rate",
+        "Non_Contradicted_Per_Image", "Weight", "Share_Of_Weighted_Total",
+    ]]
+    contributions.to_csv(OUT_DIR / "rq3_extrapolation_tier_contributions.csv", index=False)
+    print("RQ3 - Contribution of each tier to the weighted extrapolation:\n", contributions, "\n")
+
+    df = fair_df.copy()
+    df["N_Propositions"] = df["RQ3_Propositions"].apply(_count_propositions)
+    df["Non_Contradicted"] = df["N_Propositions"] - df["RQ3_Hallucinations_Count"]
+
+    # Curated common subset without entities whose Wikipedia title resolved to
+    # the wrong article; their RQ2 decisions and counts are not comparable.
+    curated = df[df["RQ2_Feature_Present"].notna() & ~df["Entity"].isin(MISRESOLVED_ENTITIES)].copy()
+    curated["Feature"] = curated["RQ2_Feature_Present"].astype(bool)
+    rows = []
+    for model, g in [("All models", curated)] + list(curated.groupby("Model")):
+        rows.append({
+            "Model": MODEL_LABELS.get(model, model),
+            "N_Images": len(g),
+            "RQ2_Feature_Present_Rate": g["Feature"].mean(),
+            "Avg_Propositions_Feature_Present": g.loc[g["Feature"], "N_Propositions"].mean(),
+            "Avg_Propositions_Feature_Absent": g.loc[~g["Feature"], "N_Propositions"].mean(),
+            "Non_Contradicted_Per_Image": g["Non_Contradicted"].mean(),
+            "Non_Contradicted_Feature_Present": g.loc[g["Feature"], "Non_Contradicted"].mean(),
+            "Non_Contradicted_Feature_Absent": g.loc[~g["Feature"], "Non_Contradicted"].mean(),
+            # Non-contradicted propositions counted only for images showing the feature.
+            "Non_Contradicted_Feature_Only": (g["Non_Contradicted"] * g["Feature"]).mean(),
+        })
+    by_feature = pd.DataFrame(rows)
+    by_feature.to_csv(OUT_DIR / "rq3_non_contradicted_by_rq2_curated.csv", index=False)
+    print(
+        f"RQ3 - Non-contradicted propositions by RQ2 outcome "
+        f"({curated['Entity'].nunique()} curated common entities, "
+        f"without {', '.join(sorted(MISRESOLVED_ENTITIES))}):\n", by_feature, "\n"
+    )
+
+    rows = []
+    for model, g in [("All models", df)] + list(df.groupby("Model")):
+        # Lead summaries of persons rarely describe appearance, so few propositions can be refuted.
+        persons = g[g["Category"] == "Historical Figures"]
+        rows.append({
+            "Model": MODEL_LABELS.get(model, model),
+            "N_Images": len(g),
+            "Avg_Propositions": g["N_Propositions"].mean(),
+            "Std_Propositions": g["N_Propositions"].std(),
+            "Historical_Figures_Images": len(persons),
+            "Historical_Figures_Zero_Hallucinations": int((persons["RQ3_Hallucinations_Count"] == 0).sum()),
+        })
+    spread = pd.DataFrame(rows)
+    spread.to_csv(OUT_DIR / "rq3_proposition_count_spread.csv", index=False)
+    print("RQ3 - Spread of proposition counts on the common set:\n", spread, "\n")
+    return contributions, by_feature, spread
+
+
 def plot_hallucination_tax_line(rq3_tier):
     """Save a line chart showing normalized hallucination rates by tier."""
     pivot = rq3_tier.pivot(index="Popularity_Tier", columns="Model", values="Hallucination_Rate")
@@ -602,6 +675,7 @@ def main():
     plot_grouped_bar(rq2_cat_fair, "Feature_Present_Rate", "Category",
                      "Feature present rate", "rq2_feature_present_by_category.png")
     compute_extrapolation_common_set(fair_fact_by_tier)
+    compute_extrapolation_diagnostics(fair_df, fair_fact_by_tier)
     print(f"Charts written to {OUT_DIR}/")
 
 

@@ -144,8 +144,9 @@ each image without knowing the entity and then checks the resulting
 propositions against the Wikipedia lead summary, yielding type match (RQ1),
 feature presence (RQ2), and the share of false propositions (RQ3).
 \item An analysis of the results by domain and popularity, a catalogue of
-typical failure patterns, and a comparison with published estimates of the
-factual knowledge of language models.
+typical failure patterns, a comparison with published estimates of the
+factual knowledge of language models, and a critical assessment of the
+evaluation design with a proposal for a better one.
 \end{enumerate}
 Code, images, evaluation results, and all derived tables and figures are
 available at \url{https://github.com/mrEkso/t2i-factuality-benchmark}.
@@ -157,7 +158,8 @@ hallucinations, and what is known about factual knowledge in language models.
 Chapter~3 describes the benchmark, the generation setup, the two-step
 evaluation, and the metrics. Chapter~4 reports the results and shows examples
 of good and bad generations. Chapter~5 answers the research questions, compares
-the findings with knowledge in language models, and discusses limitations.
+the findings with knowledge in language models, critically assesses the
+methodology, and discusses limitations.
 Chapter~6 concludes.
 
 \chapter{Related Work}
@@ -171,7 +173,7 @@ reviews how the factual correctness of generated images has been evaluated
 rare entities (Section~\ref{sec:hallucinations}). Section~\ref{sec:llm-vs-t2i}
 summarizes how the factual knowledge of language models has been measured, and
 Section~\ref{sec:positioning} compares this benchmark with the closest related
-work.
+work, in particular T2I-FactualBench.
 
 \section{Text-to-Image Models}
 \label{sec:t2i-models}
@@ -236,7 +238,8 @@ prompt and answer them with a visual question-answering (VQA) model, that is,
 a model that answers questions about an image~\citep{tifa2023,vq2}. The same idea has been applied to factuality.
 I-HallA measures factual errors in generated images with curated
 questions~\citep{ihalla2024}, T2I-FactualBench evaluates knowledge-intensive
-concepts with multi-round question answering~\citep{t2ifactualbench2025},
+concepts with multi-round question answering~\citep{t2ifactualbench2025}
+(compared in detail in Section~\ref{sec:t2ifactualbench}),
 KITTEN evaluates how faithfully generated images depict real-world
 entities~\citep{kitten2024}, and FAGER builds a factual rubric from language-model
 knowledge and reference images~\citep{fager2026}. Large proprietary
@@ -332,12 +335,12 @@ T2I-FactualBench, scenarios in HEIM, and test prompts in DoFaiR.
 \footnotesize
 \caption{Comparison with related knowledge-intensive and factuality benchmarks.}
 \label{tab:benchmark-positioning}
-\begin{tabular}{p{2.2cm}p{1.6cm}p{1.2cm}p{4.6cm}p{3.2cm}}
+\begin{tabular}{>{\raggedright\arraybackslash}p{2.2cm}>{\raggedright\arraybackslash}p{1.9cm}>{\raggedright\arraybackslash}p{1.4cm}>{\raggedright\arraybackslash}p{4.4cm}>{\raggedright\arraybackslash}p{3.1cm}}
 \toprule
 Benchmark & Test items & Models & Evaluation & Release/access \\
 \midrule
 This work & 298 entities & 3 & Blind VLM description, Wikipedia-grounded proposition checks & Public code, images, results \\
-T2I-FactualBench & 1,600 concepts & 11 & Multi-round VQA and human validation & Benchmark release \\
+T2I-FactualBench & 1,600 concepts (3,000 prompts) & 7 (+4 variants) & Multi-round VQA with GPT-4o and a reference image; human validation & Benchmark and code \\
 KITTEN & 322 entities & 7 & Knowledge-intensive entity evaluation with automatic and human metrics & Benchmark/paper release \\
 HEIM & 62 scenarios & 26 & Holistic alignment, quality, safety, and bias evaluation & Benchmark suite \\
 DoFaiR & 756 test prompts & DALL-E 3 & Factuality effects of diversity interventions & Benchmark and code \\
@@ -352,6 +355,97 @@ release contains the full image corpus together with a record of the images
 that could not be generated. In addition, part of its entities are sampled at
 random from Wikipedia and stratified by popularity instead of being chosen by
 hand.
+
+\subsection{Comparison with T2I-FactualBench}
+\label{sec:t2ifactualbench}
+
+T2I-FactualBench~\citep{t2ifactualbench2025} is the work closest to this
+thesis. Its first level, \emph{single knowledge concept memorization}, uses the
+same prompt template as this thesis, ``An image of [concept]'', and asks the
+same question: does a model draw a concept correctly when the prompt gives only
+its name? Two further levels go beyond this thesis. They place a concept in a
+given action, attribute, or scene, or combine two or three concepts in one
+image, for 3{,}000 prompts in total. Table~\ref{tab:t2ifactualbench} compares
+the two benchmarks point by point.
+
+\begin{table}[ht]
+\centering
+\footnotesize
+\caption{T2I-FactualBench~\citep{t2ifactualbench2025} compared with this
+benchmark. The T2I-FactualBench column refers mainly to its memorization level,
+which corresponds to the task studied here.}
+\label{tab:t2ifactualbench}
+\begin{tabular}{>{\raggedright\arraybackslash}p{2.3cm}>{\raggedright\arraybackslash}p{5.4cm}>{\raggedright\arraybackslash}p{5.4cm}}
+\toprule
+ & T2I-FactualBench & This work \\
+\midrule
+Test items & 1{,}600 concepts in eight categories (animals, plants, persons, locations, artifacts, food, events, celestial bodies) & 298 individual entities: 100 curated in four domains, 198 sampled from Wikipedia \\
+Selection & Concepts with fewer than four hyponyms in BabelNet, many of them classes such as breeds or product types; abstract categories excluded & Curated entities chosen by hand; Random entities drawn at random, including abstract topics \\
+Popularity & Acknowledged as a factor, not measured & Three tiers by article size \\
+Prompts & ``An image of [concept]'', plus instantiation and composition prompts & ``An image of [entity]'' only \\
+Models & SD v1.5, SDXL, SD 3.5, PixArt-$\alpha$, Playground v2.5, FLUX.1-dev, DALL-E 3, and four knowledge-injection variants & GPT Image 2, FLUX.2-dev, FLUX.2-klein-4B \\
+Evaluator & GPT-4o; sees the concept name, the generated image, and a reference image & Gemma 4 31B; describes the image blind, then checks the description without the image \\
+Reference & One image per concept from BabelNet & Wikipedia lead summary \\
+Score & Four binary scores (shape, colour, texture, feature details), averaged & Type match, feature presence, share of contradicted propositions \\
+Human validation & Three annotators, 900 samples (300 for concept factuality) & None \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The benchmarks differ first in what they test. T2I-FactualBench defines a
+\emph{knowledge concept} as a concept with fewer than four hyponyms in the
+BabelNet knowledge base, such as a dog breed, a plant species, a handbag model,
+a landmark, or a celebrity, and keeps eight categories that can be drawn.
+Many of its concepts are classes rather than individual entities, and the
+authors note that popularity influences the results without measuring this
+influence. This thesis uses only individual Wikipedia entities. Two thirds of
+them are drawn at random, which brings in abstract topics such as
+\emph{Marxism} or a season of a football club and makes popularity an explicit
+variable (Section~\ref{sec:benchmark-design}).
+
+The second difference is the reference. T2I-FactualBench gives GPT-4o the
+generated image together with a reference image of the concept and asks for
+four binary scores. A reference image can verify appearance that no text
+describes, such as a face or the pattern of a fur; the Wikipedia lead summary
+used here usually cannot (Section~\ref{sec:limitations}). A reference image
+cannot, however, verify relations to other entities, such as the national team
+on a cricketer's shirt (Table~\ref{tab:fact-types}). In addition, the texture
+score partly measures image quality, since it asks for textures ``free from
+blurriness, pixelation, or artificial effects''. A text reference covers
+relations, but not appearance, so the two references complement each other.
+
+Third, the evaluator of T2I-FactualBench knows which concept the image should
+show. This thesis keeps the first judge call blind so that the entity name
+cannot suggest what the judge should see. The price is that a feature that is
+drawn but not described in the blind call is lost
+(Section~\ref{sec:evaluation-pipeline}).
+
+Fourth, T2I-FactualBench validates its evaluator. Three annotators rated 900
+samples, 300 of them for concept factuality, and on these the concept scores
+of GPT-4o reach a Spearman correlation of 0.57 with the mean human rating. Without the reference image the correlation drops
+to 0.44, and the best open-weight evaluator, Qwen2.5-VL-72B, reaches 0.49. The
+judge of this thesis has not been validated in this way, and these numbers
+suggest that an open-weight judge without a reference image is the weaker
+setup (Section~\ref{sec:methodology-critique}).
+
+Where the results can be compared, they agree in direction. At the
+memorization level, the proprietary DALL-E~3 scores highest (55.5 of 100,
+without persons),
+ahead of Stable Diffusion~3.5 (46.2) and FLUX.1-dev (35.6), just as GPT Image 2
+leads on RQ2 here. The authors also report the same kind of near miss as in
+Table~\ref{tab:failure-patterns}, for example a wild boar instead of a Baird's
+tapir, and DALL-E~3 could not be evaluated on persons because of OpenAI's
+content policy, which matches the refusals of GPT Image 2
+(Section~\ref{sec:fair-comparison}). One result differs: T2I-FactualBench finds
+locations among the hardest categories, whereas landmarks have the highest
+feature rates in this thesis. Its location category, however, also contains
+natural landforms, while the curated landmarks here are world-famous buildings.
+
+The two benchmarks therefore complement each other. T2I-FactualBench covers
+more concepts and harder prompts and validates its evaluator against human
+ratings. This thesis covers individual entities sampled by popularity, keeps
+the first evaluation step blind, and checks the images against an external text
+reference.
 
 
 \chapter{Methodology}
@@ -701,7 +795,8 @@ product of the last two factors is the number of propositions per image that
 are not shown to be false. It includes scene and
 text propositions (Section~\ref{sec:visual-facts}), so $\mathrm{Total}(m)$ is
 an upper bound on the number of correct entity facts, not a count of verified
-facts.
+facts. Section~\ref{sec:methodology-critique} discusses how well this quantity
+reflects what a model knows.
 
 
 \chapter{Results}
@@ -884,6 +979,19 @@ non-contradicted propositions. A stratified sample like this one therefore has
 to be reweighted before it is extrapolated, and the size of the correction
 depends on the model.
 
+The near equality of the weighted totals stands in contrast to the clear
+differences between the models in RQ2 and in the hallucination rates. It
+arises in the Long-tail tier, which contributes 93--94\% of every model's
+total. There, the three models produce almost exactly the same number of
+non-contradicted propositions per image (5.92 for GPT Image 2, 5.94 for
+FLUX.2-dev, and 5.92 for FLUX.2-klein-4B): GPT Image 2 has the highest error
+rate in this tier, but also the longest descriptions. In the Famous tier, GPT
+Image 2 is clearly ahead (8.08, 6.78, and 5.98 non-contradicted propositions
+per image), but this tier carries only 0.3\% of the weight. The equal totals
+are therefore not evidence that the three models know equally much;
+Section~\ref{sec:methodology-critique} examines what the measure captures and
+how a better design would look.
+
 \begin{table}[ht]
 \centering
 \small
@@ -903,24 +1011,28 @@ FLUX.2-klein-4B & 44.4M & 43.0M & +3.0\% \\
 \section{Examples of Good and Bad Generations}
 \label{sec:qualitative-examples}
 
-The aggregate numbers do not show what a good or a bad generation looks like.
-This section shows typical cases from the corpus. They illustrate the metrics
-and are not used as additional statistical evidence.
+The aggregate numbers do not show what a good or a bad generation looks like,
+nor what the judge actually writes and decides. This section therefore gives
+the complete judge output for three entities of very different kinds: an animal
+(Platypus), a person (Boudica), and a city (Belgrade). It then summarizes the
+recurring patterns of bad generations. The examples illustrate how the metrics
+come about and are not used as additional statistical evidence.
+
+\subsection{An Animal: Platypus}
 
 Figure~\ref{fig:platypus} shows the three images for \emph{Platypus}, a curated
 entity with the expected type ``mammal'' and the distinctive feature ``duck-like
 bill and beaver-like tail''. The three images separate the three research
 questions. GPT Image 2 draws a brown semi-aquatic mammal with a duck-like bill
 and webbed feet: type, feature, and all six propositions are correct.
-FLUX.2-dev draws a brown semi-aquatic mammal with a flat tail but a rounded dark snout instead of a duck-like bill. The type is
-correct and none of its seven propositions contradicts the summary, but the
-feature that separates a platypus from an otter or a beaver is missing, so RQ2
-fails. FLUX.2-klein-4B draws a capybara: the type ``animal'' is still accepted,
-but the feature is missing and all five propositions are false. In the sense of
-this benchmark, a generation is good only if it passes all
-three checks, as the GPT Image 2 platypus does. For Random entities such as
-Dennis Dart (Figure~\ref{fig:problem-example}), only the third check applies,
-because they have no annotated type or feature.
+FLUX.2-dev draws a brown semi-aquatic mammal with a flat tail but a rounded dark
+snout instead of a duck-like bill. The type is correct and none of its seven
+propositions contradicts the summary, but the feature that separates a platypus
+from an otter or a beaver is missing, so RQ2 fails. FLUX.2-klein-4B draws a
+capybara: the type ``animal'' is still accepted, but the feature is missing and
+all five propositions are judged false. In the sense of this benchmark, a
+generation is good only if it passes all three checks, as the GPT Image 2
+platypus does.
 
 \begin{figure}[ht]
 \centering
@@ -940,8 +1052,219 @@ because they have no annotated type or feature.
 \label{fig:platypus}
 \end{figure}
 
+\begin{table}[ht]
+\centering
+\footnotesize
+\caption{Complete judge output for the Platypus images in
+Figure~\ref{fig:platypus}. The left column gives the type predicted in the
+blind call and the decisions of the grounded call; ``false'' is the number of
+propositions judged false out of all propositions. The right column lists the
+propositions of the blind call verbatim and the explanation returned by the
+grounded call. Propositions marked \ding{55} are those that the explanation
+names as false.}
+\label{tab:platypus-judge}
+\begin{tabular}{>{\raggedright\arraybackslash}p{2.5cm}>{\raggedright\arraybackslash}p{10.6cm}}
+\toprule
+Image and decisions & Propositions (blind call) and explanation (grounded call) \\
+\midrule
+GPT Image 2 \newline type: Animal \newline RQ1 \ding{51}\quad RQ2 \ding{51} \newline false: 0/6 &
+(1)~The animal has brown fur.
+(2)~The animal has a wide, flat snout resembling a bill.
+(3)~The animal has webbed feet.
+(4)~The animal has a broad, flat tail.
+(5)~The animal is positioned in shallow water with a pebbled bottom.
+(6)~There is a brown leaf on the ground to the right of the animal.
+\newline \emph{Explanation:} none. \\
+\midrule
+FLUX.2-dev \newline type: Animal \newline RQ1 \ding{51}\quad RQ2 \ding{55} \newline false: 0/7 &
+(1)~The animal has brown fur.
+(2)~The fur appears wet.
+(3)~The animal is in shallow water.
+(4)~The animal has a flat, wide snout.
+(5)~A small part of the tongue is visible.
+(6)~The animal has small ears.
+(7)~There are ripples in the water around the animal.
+\newline \emph{Explanation:} none. \\
+\midrule
+FLUX.2-klein-4B \newline type: Animal \newline RQ1 \ding{51}\quad RQ2 \ding{55} \newline false: 5/5 &
+(1)~The animal has brown, coarse fur.~\ding{55}
+(2)~The animal has a large, dark snout.~\ding{55}
+(3)~The animal is sitting on green grass and dirt.~\ding{55}
+(4)~The animal has small ears.~\ding{55}
+(5)~The animal has long whiskers.~\ding{55}
+\newline \emph{Explanation:} ``The image depicts a capybara; the ground truth
+describes a platypus with a duck-bill and electrolocation, not a large dark
+snout, long whiskers, or the specific morphology of a capybara.'' \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Table~\ref{tab:platypus-judge} shows what the judge produces for these images.
+The blind call returns five to seven propositions per image, most of them about
+the animal and one or two about its surroundings. The grounded call returns the
+two decisions, the number of false propositions, and a short explanation; it
+does not label each proposition separately. Two details of the table matter
+for the metrics. First, the RQ2 decision depends on the wording of the blind
+call: ``a wide, flat snout resembling a bill'' (GPT Image 2) counts as the
+duck-like bill, ``a flat, wide snout'' (FLUX.2-dev) does not. Second, for the
+capybara the judge counts all five propositions as false, including ``The
+animal has small ears'' and ``The animal is sitting on green grass and dirt'',
+which the summary does not contradict. Once the judge concludes that the image
+shows a different animal, it rejects every proposition. For a wrong referent
+this is reasonable, but it means that the count is not a strict check of each
+proposition against the reference.
+
+\subsection{A Person: Boudica}
+
+\emph{Boudica} is a curated historical figure with the expected type ``queen''
+and the distinctive feature ``long red hair and ancient tribal clothing''. Her
+lead summary describes what she did, not how she looked: she was a queen of the
+British Iceni tribe who led a failed uprising against the Roman Empire in AD 60
+or 61. Figure~\ref{fig:boudica} shows the images and
+Table~\ref{tab:boudica-judge} the judge output.
+
+\begin{figure}[ht]
+\centering
+\begin{minipage}{0.32\textwidth}\centering
+\includegraphics[width=\linewidth]{../Code/generation/generated_images/gpt_image_2/Historical_Figures/Boudica.png}\\
+\small (a) GPT Image 2
+\end{minipage}\hfill
+\begin{minipage}{0.32\textwidth}\centering
+\includegraphics[width=\linewidth]{../Code/generation/generated_images/scads_flux2_dev/Historical_Figures/Boudica.png}\\
+\small (b) FLUX.2-dev
+\end{minipage}\hfill
+\begin{minipage}{0.32\textwidth}\centering
+\includegraphics[width=\linewidth]{../Code/generation/generated_images/scads_flux2_klein/Historical_Figures/Boudica.png}\\
+\small (c) FLUX.2-klein-4B
+\end{minipage}
+\caption{Images generated from the prompt ``An image of Boudica.''}
+\label{fig:boudica}
+\end{figure}
+
+\begin{table}[ht]
+\centering
+\footnotesize
+\caption{Complete judge output for the Boudica images in
+Figure~\ref{fig:boudica}, in the format of Table~\ref{tab:platypus-judge}. For
+FLUX.2-dev, the explanation names two of the four propositions counted as false;
+the judge does not say which other two it counted.}
+\label{tab:boudica-judge}
+\begin{tabular}{>{\raggedright\arraybackslash}p{2.5cm}>{\raggedright\arraybackslash}p{10.6cm}}
+\toprule
+Image and decisions & Propositions (blind call) and explanation (grounded call) \\
+\midrule
+GPT Image 2 \newline type: Person \newline RQ1 \ding{51}\quad RQ2 \ding{51} \newline false: 0/8 &
+(1)~The central figure is a woman with long red hair.
+(2)~The woman has blue markings on her face.
+(3)~The woman is holding a spear.
+(4)~The woman is wearing a plaid cloak.
+(5)~The woman is standing in a carved wooden chariot.
+(6)~There is a red banner with the text `BOUDICA' and a triskelion symbol.
+(7)~There are several men in armor in the background.
+(8)~The sky is cloudy.
+\newline \emph{Explanation:} none. \\
+\midrule
+FLUX.2-dev \newline type: Person \newline RQ1 \ding{51}\quad RQ2 \ding{55} \newline false: 4/9 &
+(1)~A woman is wearing a metal helmet with a plume.~\ding{55}
+(2)~The woman is holding a long spear in her right hand.
+(3)~The woman is holding a round shield in her left hand.
+(4)~The woman is wearing a metal breastplate and greaves.~\ding{55}
+(5)~The woman is wearing a red cape.
+(6)~There are multiple soldiers in similar armor in the background.
+(7)~There are red flags visible behind the soldiers.
+(8)~The setting is a rocky, mountainous terrain.
+(9)~The sky is overcast with a muted color palette.
+\newline \emph{Explanation:} ``The woman is depicted in Roman-style armor
+(helmet, breastplate, greaves), which contradicts her role as a leader of an
+uprising against the Roman Empire.'' \\
+\midrule
+FLUX.2-klein-4B \newline type: Person \newline RQ1 \ding{55}\quad RQ2 \ding{55} \newline false: 2/9 &
+(1)~A man is standing in a mountainous region.~\ding{55}
+(2)~The man is wearing a brown fur-lined garment.
+(3)~The man is wearing a crown on his head.
+(4)~The man is holding a spear in his right hand.
+(5)~The man is holding a spear with a feather in his left hand.
+(6)~There is a body of water in the background.
+(7)~There are green mountains in the background.
+(8)~The man has a beard.~\ding{55}
+(9)~The text `BUULDCTH' is overlaid at the bottom of the image.
+\newline \emph{Explanation:} ``The image depicts a man with a beard, whereas
+Boudica was a queen.'' \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+GPT Image 2 draws a red-haired woman with blue face paint and a plaid cloak in
+a carved chariot, in front of a banner that reads ``BOUDICA''; all three checks
+pass. FLUX.2-dev draws a woman in classical, Roman-looking armour with a plumed
+helmet and a round shield, in front of an army of similarly armoured soldiers.
+The type is correct and the feature is missing. The judge counts four of nine
+propositions as false because Roman-style armour contradicts her role as the
+leader of an uprising against Rome. This is an inference from the summary, not
+a literal contradiction, and since the explanation names only the helmet and the
+breastplate with greaves, the other two propositions in the count cannot be
+identified. FLUX.2-klein-4B draws a bearded man in furs with a crown and two
+spears and writes the garbled text ``BUULDCTH'' into the image. The blind call
+predicts ``Person'', but the grounded call rejects the type, because a bearded
+man is not a queen, and counts the two propositions about the man and his beard
+as false.
+
+The example adds two observations to the Platypus case. First, because the summary says
+nothing about Boudica's appearance, appearance propositions such as ``The woman
+has blue markings on her face'' can be neither confirmed nor refuted. The
+errors that the judge does find come from world knowledge, such as the Roman
+armour, or from the sex of the person. Second, the GPT Image 2 image contains
+the entity name, which the blind judge can read (Section~\ref{sec:limitations}).
+
+\subsection{A City: Belgrade}
+
+\emph{Belgrade} is a Random entity from the Famous tier, so only RQ3 applies.
+Its lead summary states that Belgrade is the capital of Serbia, that it lies at
+the confluence of the Sava and the Danube, and that about 1.2~million people
+live in the city proper. Figure~\ref{fig:belgrade} shows the three images. GPT
+Image 2 draws a riverside old town at sunset with moored river boats and a tall
+baroque church tower; the view closely resembles Belgrade's old town seen from
+the Sava, with the bell tower of St.~Michael's Cathedral. FLUX.2-dev draws a
+Central European river city with a stone arch bridge, and FLUX.2-klein-4B an
+aerial view of a city with green copper domes, red roofs, and a clock tower.
+Neither of the two FLUX images shows a landmark that identifies Belgrade.
+
+\begin{figure}[ht]
+\centering
+\begin{minipage}{0.32\textwidth}\centering
+\includegraphics[width=\linewidth]{../Code/generation/generated_images/gpt_image_2/Random_Famous/Belgrade.png}\\
+\small (a) GPT Image 2
+\end{minipage}\hfill
+\begin{minipage}{0.32\textwidth}\centering
+\includegraphics[width=\linewidth]{../Code/generation/generated_images/scads_flux2_dev/Random_Famous/Belgrade.png}\\
+\small (b) FLUX.2-dev
+\end{minipage}\hfill
+\begin{minipage}{0.32\textwidth}\centering
+\includegraphics[width=\linewidth]{../Code/generation/generated_images/scads_flux2_klein/Random_Famous/Belgrade.png}\\
+\small (c) FLUX.2-klein-4B
+\end{minipage}
+\caption{Images generated from the prompt ``An image of Belgrade.'' All three
+receive zero false propositions.}
+\label{fig:belgrade}
+\end{figure}
+
+The judge sees no difference between them. All three blind descriptions
+consist of similar propositions, for example ``A tall church spire is visible
+in the skyline'' (GPT Image 2), ``A stone arch bridge crosses the river''
+(FLUX.2-dev), and ``There are multiple buildings with green domes''
+(FLUX.2-klein-4B). The grounded call finds no false proposition in any of
+them: 0 of 7, 0 of 8, and 0 of 7. Nothing in the summary contradicts a river,
+a bridge, or a dome, and nothing in it confirms the church tower that makes the
+GPT Image 2 image recognizable. For RQ3 the three images are therefore equally
+good, although only one of them shows Belgrade.
+Section~\ref{sec:methodology-critique} returns to this case.
+
+\subsection{Recurring Failure Patterns}
+
 Bad generations follow four recurring patterns, listed in
-Table~\ref{tab:failure-patterns}.
+Table~\ref{tab:failure-patterns}. For Random entities such as Dennis Dart
+(Figure~\ref{fig:problem-example}), only the third research question applies,
+because they have no annotated type or feature.
 
 \begin{table}[ht]
 \centering
@@ -985,9 +1308,12 @@ means ``nothing false'', not ``knowledge shown''.
 \chapter{Discussion}
 
 This chapter interprets the results. Section~\ref{sec:answers} answers the
-research questions, Section~\ref{sec:discussion-llm} compares the findings with
-what is known about factual knowledge in language models, and
-Section~\ref{sec:implications} discusses implications and limitations.
+research questions, and Section~\ref{sec:discussion-llm} compares the findings
+with what is known about factual knowledge in language models.
+Section~\ref{sec:methodology-critique} critically assesses the methodology,
+explains why the extrapolation does not separate the models, and outlines a
+better experiment design. Section~\ref{sec:implications} discusses
+implications and limitations.
 
 \section{Answers to the Research Questions}
 \label{sec:answers}
@@ -1033,7 +1359,10 @@ non-contradicted propositions for each of 7.2~million articles. About a third of
 propositions describe the scene or transcribe text rather than the entity
 (Section~\ref{sec:visual-facts}), so the entity-related part is closer to 25--30
 million. Finally, a GPTKB triple is a relational fact elicited by many prompts,
-whereas a proposition is only what one image happens to show.
+whereas a proposition is only what one image happens to show. Moreover, the
+extrapolated number hardly depends on the model, although the models differ
+clearly in RQ2; Section~\ref{sec:methodology-critique} shows that it reflects
+the design of the measure more than the knowledge of the generators.
 
 The per-model results nevertheless point in the direction known from language
 models. The three generators recognize the coarse type about equally often
@@ -1049,6 +1378,141 @@ available even to small models, while entity-specific visual detail requires
 more capacity. The popularity effect for GPT Image 2
 (Table~\ref{tab:tier-hallucination}) likewise resembles the drop in LLM accuracy
 for rare entities~\citep{mallen2023,kandpal2023}.
+
+\section{Critical Assessment of the Methodology}
+\label{sec:methodology-critique}
+
+Section~\ref{sec:answers} reports clear differences between the models: GPT
+Image 2 shows the distinctive feature for 62.9\% of the curated entities and
+FLUX.2-klein-4B for 28.9\%. The extrapolation in
+Section~\ref{sec:extrapolation-results}, by contrast, credits all three models
+with about 43~million non-contradicted propositions. If both numbers measured
+the same knowledge, they could not both be right. This section argues that the
+contradiction comes from the design of the extrapolation measure, not from the
+models, and outlines an experiment design that would avoid it.
+
+\subsection{Why the Extrapolation Does Not Separate the Models}
+
+The extrapolation multiplies, for each tier, the number of propositions per
+image by the share of them that is not contradicted
+(Equation~\ref{eq:weighted-extrapolation}). Neither factor depends much on
+whether the model knows the entity.
+
+\paragraph{The number of propositions is set by the judge.} The blind call asks
+for ``a list of short, atomic factual claims'' about the image, and the judge
+answers with lists of similar length for almost every image: 7.4 propositions
+on average with a standard deviation of 1.4, and between 7.1 and 7.7 per model
+(Table~\ref{tab:fair-overall}). A recognizable image of the requested entity and
+an image of something else receive lists of about the same length. On the
+curated subset, images that show the distinctive feature yield 6.8 propositions
+and images that do not yield 7.0. The count therefore describes the answering
+style of the judge more than the knowledge of the generator.
+
+\paragraph{Not contradicted is not the same as known.} A proposition counts
+towards the total unless the lead summary shows it to be false. Most
+propositions concern details that the summary does not mention, so they pass
+whether the image shows the right entity or not. On the 96 curated entities of
+the common set (without Montezuma, Section~\ref{sec:limitations}), an image
+that fails RQ2 still contributes 6.19 non-contradicted propositions, compared
+with 6.73 for an image that passes. The Belgrade images
+(Figure~\ref{fig:belgrade}) show the same effect: a recognizable view of
+Belgrade and two generic cities all receive zero false propositions. For
+historical figures, whose summaries describe what a person did rather than how
+the person looked, 58 of the 66 images in the common set contain no false
+proposition at all. Only gross errors, such as a man for a queen or a capybara
+for a platypus, reduce the count noticeably.
+
+\paragraph{The weighting magnifies the least informative tier.} The population
+weights assign 94\% of Wikipedia to the Long-tail tier, which therefore
+contributes 93--94\% of each total. In this tier, two effects happen to cancel
+out: GPT Image 2 has the highest error rate (23.0\%) but also the longest
+descriptions, so all three models end up at about 5.9 non-contradicted
+propositions per image (Section~\ref{sec:extrapolation-results}). The tiers in
+which GPT Image 2 is clearly ahead carry too little weight to matter. The near
+equality of the totals thus rests on 65 Long-tail entities per model and on a
+coincidence of two opposite effects.
+
+These points do not invalidate the answers to RQ1--RQ3. RQ2 asks whether one
+pre-specified, entity-specific fact is shown, and this question separates the
+models. The extrapolation asks how many statements about an image survive a
+check that can only refute, and this quantity is nearly constant. A simple
+variant on the curated subset makes the difference visible. If
+non-contradicted propositions are counted only for images that show the
+distinctive feature, the average per image falls from 6.66, 6.45, and 6.21 to
+4.32, 2.97, and 1.90 for GPT Image 2, FLUX.2-dev, and FLUX.2-klein-4B. The ratio
+between the best and the worst model grows from 1.07 to 2.3, close to the ratio
+of their RQ2 rates. The totals in Table~\ref{tab:extrapolation} should
+therefore be read as the number of visual statements that the models can make
+without being refuted by a short reference text, not as a measure of how much
+they know.
+
+Two further weaknesses concern the grounded call itself and are visible in the
+examples of Section~\ref{sec:qualitative-examples}. The call returns only a
+count and a free-text explanation, so it is not recorded which propositions
+were counted as false (Table~\ref{tab:boudica-judge}); and the judge sometimes
+rejects all propositions of an image once it decides that the image shows a
+different entity (Table~\ref{tab:platypus-judge}). The RQ2 decision, in
+addition, depends on how the blind call happens to word its description.
+
+\subsection{A Better Experiment Design}
+
+The main weakness lies in the direction of the check. The current design starts
+from the image: the judge describes whatever it sees, and the reference can
+only refute. A design that measures knowledge should start from the entity: it
+should fix in advance what a model that knows the entity would draw and then
+check how much of it the image shows. The following changes would implement
+this, and most of them reuse parts of the existing pipeline.
+
+\begin{enumerate}
+\item \textbf{Reference-derived checklists.} For each entity, a fixed list of
+visual facts would be collected before generation: from the full Wikipedia
+article, from Wikidata properties such as colour, material, architectural
+style, or occupation, and from reference photographs, in the spirit of
+TIFA~\citep{tifa2023} and T2I-FactualBench~\citep{t2ifactualbench2025}. The
+judge would answer one question per fact, for example ``Does the animal have a
+duck-like bill?''. The score is the share of checklist facts that the image
+shows. It has the same denominator for every model, it cannot be raised by
+longer descriptions, and RQ2 is the special case of a checklist with a single
+item. The number of facts shown per entity could then be extrapolated in the
+same way as in Section~\ref{sec:weighted-extrapolation}.
+
+\item \textbf{Three labels per proposition.} Where open-ended descriptions are
+kept, the grounded call should label each proposition separately as
+\emph{supported}, \emph{contradicted}, or \emph{not verifiable}, and only
+supported propositions would count as knowledge. The current design merges the
+first and the third label. A reference image, as in T2I-FactualBench, would make
+appearance verifiable; there, removing it lowered the agreement with human
+ratings from 0.57 to 0.44.
+
+\item \textbf{A generic baseline.} Propositions such as ``There is a river'' or
+``The man has a beard'' are true of many entities. Generating one image from the
+type alone (``An image of a city'', ``An image of a queen'') and running the same
+pipeline would show how many propositions a model produces without any
+entity-specific knowledge; only the excess over this baseline would count.
+Alternatively, the judge could be asked whether a proposition distinguishes the
+entity from other entities of the same type.
+
+\item \textbf{Identification instead of description.} A blind judge could be
+shown the image together with the entity name and several distractors of the
+same type, for example five European capitals for Belgrade, and asked which of
+them the image shows. Identification accuracy above chance would measure
+entity-specific knowledge directly and would not depend on how many
+propositions the judge writes. Text written into the image would have to be
+masked first, since it often names the entity (Section~\ref{sec:limitations}).
+
+\item \textbf{Sampling and validation.} Because the Long-tail tier carries 94\%
+of the weight, an extrapolation needs many more Long-tail entities than the 66
+used here, or a sample drawn in proportion to the population. Several images
+per entity would capture the variation between generations, and a sample of
+propositions annotated by humans would show how often the judge is right, as
+T2I-FactualBench did with three annotators.
+\end{enumerate}
+
+Within the scope of this thesis, the existing pipeline answers RQ1, RQ2, and
+RQ3 as they are defined, and the experiments were not repeated with the design
+above. The extrapolation, however, would need such a reference-first design
+before it could be compared with knowledge counts for language models such as
+GPTKB.
 
 \section{Implications and Limitations}
 \label{sec:implications}
@@ -1138,11 +1602,25 @@ entirely wrong. Compared with language models, whose factual knowledge has been
 materialized at the scale of $10^8$ triples, the knowledge of image generators
 is harder to elicit and limited to what can be drawn.
 
-Future work should validate the judge against human annotations on a sample of
-propositions and use more than one judge. A longer reference than the Wikipedia
-lead would separate false propositions from unmentioned ones. Repeated
-generations per entity, a closed label set for the blind call, more
-models, and a larger, naturally sampled Long-tail set would allow stronger
+The extrapolation to the English Wikipedia credits all three models with about
+43~million non-contradicted propositions, although they differ clearly in RQ2.
+The critical assessment in Section~\ref{sec:methodology-critique} traces this to
+the design of the measure: the judge writes about seven propositions for almost
+any image, and a short reference text can refute only few of them, so the count
+hardly depends on whether the model knows the entity. The extrapolated number is
+therefore an upper bound on unrefuted visual statements, not an estimate of
+visual knowledge.
+
+Future work should reverse the direction of the check: it should derive a
+checklist of visual facts for each entity from reference texts, knowledge-base
+properties, and reference images before generation, and measure how many of
+them an image shows. Labelling each proposition as supported, contradicted, or
+not verifiable, subtracting a baseline generated from the entity type alone, and
+asking a blind judge to identify the entity among distractors would separate
+entity knowledge from generic content. The judge should be validated against
+human annotations on a sample of propositions, and more than one judge should be
+used. Repeated generations per entity, a closed label set for the blind call,
+more models, and a larger, naturally sampled Long-tail set would allow stronger
 conclusions.
 
 \appendix
@@ -1183,8 +1661,9 @@ organized by model and category. The evaluation results contain one row per
 successful entity--model pair, and the full benchmark release includes the
 analysis script, the evaluation outputs, and the generated image folders. The
 analysis script regenerates coverage tables, common-set comparisons, tier-level
-hallucination tables, proposition-count tables, correlations, and figures from
-these inputs. This separation between raw rows and derived tables allows the
+hallucination tables, proposition-count tables, correlations, the
+extrapolation diagnostics used in Section~\ref{sec:methodology-critique}, and
+figures from these inputs. This separation between raw rows and derived tables allows the
 reported values to be recomputed after changing a metric or adding another model.
 
 The generation script uses ten concurrent workers and skips existing files, but
