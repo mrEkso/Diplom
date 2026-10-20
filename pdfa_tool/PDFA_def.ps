@@ -1,0 +1,23 @@
+%!
+% PDF/A prefix for Ghostscript (adapted from Ghostscript's lib/PDFA_def.ps).
+% The ICC profile path is passed by make_pdfa.sh as -sPDFA_ICC=<path>.
+
+[ /Title (Measuring Factual Knowledge in Text-to-Image Models)
+  /Author (Davyd Okaianchenko)
+  /Subject (Bachelor's thesis, TU Dresden)
+  /DOCINFO pdfmark
+
+/ICCProfile PDFA_ICC def
+
+[/_objdef {icc_PDFA} /type /stream /OBJ pdfmark
+[{icc_PDFA} << /N 3 >> /PUT pdfmark
+[{icc_PDFA} ICCProfile (r) file /PUT pdfmark
+
+[/_objdef {OutputIntent_PDFA} /type /dict /OBJ pdfmark
+[{OutputIntent_PDFA} <<
+  /Type /OutputIntent
+  /S /GTS_PDFA1
+  /DestOutputProfile {icc_PDFA}
+  /OutputConditionIdentifier (sRGB)
+>> /PUT pdfmark
+[{Catalog} << /OutputIntents [ {OutputIntent_PDFA} ] >> /PUT pdfmark

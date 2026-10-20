@@ -6,7 +6,7 @@ thesis measures the factual knowledge of three T2I models, GPT Image 2,
 FLUX.2-dev, and FLUX.2-klein-4B, about 298 real-world entities: 100 curated
 entities from four domains, each annotated with an expected type and a
 distinctive visual feature, and 198 randomly sampled Wikipedia entities in three
-popularity tiers. Every entity is generated from the prompt ``An image of
+popularity tiers. Every image is generated from the prompt ``An image of
 [entity].'' A vision-language model, used as a judge, first describes each image without
 knowing which entity it should show and lists short statements about what is
 visible, called propositions; a second call checks these statements against the
@@ -14,7 +14,7 @@ introduction of the entity's Wikipedia article. On the 289 entities
 available for all models, the models draw the correct coarse type for 73--79\%
 of the curated entities, but the distinctive feature for only 63\% (GPT
 Image 2), 46\% (FLUX.2-dev), and 29\% (FLUX.2-klein-4B). Of the extracted
-propositions, 9.0\%, 9.7\%, and 17.7\% contradict the reference; for GPT
+propositions, 9.0\%, 9.7\%, and 17.7\% contradict the Wikipedia introduction; for GPT
 Image 2 this share rises from 3\% for the most popular to 23\% for the least
 popular entities. The most severe errors come from reading the entity name as
 something else, such as a portrait of a man for the British bus model Dennis

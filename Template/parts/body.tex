@@ -352,7 +352,7 @@ This benchmark is smaller than the broad evaluation suites. It differs from
 them in three respects: the prompt contains only the entity name, the same
 two-step evaluation with a blind first call is applied to all models, and the
 release contains the full image corpus together with a record of the images
-that could not be generated. In addition, part of its entities are sampled at
+that could not be generated. In addition, two thirds of its entities are sampled at
 random from Wikipedia and stratified by popularity instead of being chosen by
 hand.
 
@@ -503,7 +503,7 @@ curated entity is annotated with an expected type and a distinctive feature.
 The expected type names the class of the entity (for example, ``Castle'' for
 Neuschwanstein or ``Mammal'' for Platypus). The distinctive feature is a
 visible property that separates the entity from similar ones (for example,
-``duck-like bill and beaver-like tail'' for Platypus).
+``duck-like bill and beaver-like tail'' for Platypus). The complete list is given in Appendix~\ref{sec:curated-list}.
 
 The Random subset tests entities that were not chosen by hand. Its entities
 were drawn with the MediaWiki \texttt{list=random} API from the article
@@ -700,7 +700,7 @@ evaluation file.
 \caption{Kinds of propositions extracted from generated images, with examples
 from the evaluation corpus.}
 \label{tab:fact-types}
-\begin{tabular}{p{2.1cm}p{6.6cm}p{4.3cm}}
+\begin{tabular}{>{\raggedright\arraybackslash}p{2.1cm}>{\raggedright\arraybackslash}p{6.6cm}>{\raggedright\arraybackslash}p{4.3cm}}
 \toprule
 Kind & Example proposition (entity, model) & Checkable against the lead summary? \\
 \midrule
@@ -868,7 +868,7 @@ more. GPT Image 2 shows the distinctive feature for 62.9\% of the entities,
 FLUX.2-dev for 46.4\%, and FLUX.2-klein-4B for 28.9\%. All three pairwise
 differences are significant without a correction for multiple testing (GPT
 Image 2 versus FLUX.2-dev $p=0.021$, GPT Image 2 versus FLUX.2-klein-4B
-$p<0.001$, and FLUX.2-dev versus FLUX.2-klein-4B $p=0.0118$). With a
+$p<0.001$, and FLUX.2-dev versus FLUX.2-klein-4B $p=0.012$). With a
 Bonferroni correction for three comparisons, which lowers the threshold to
 $0.05/3 \approx 0.0167$, the difference between GPT Image 2 and FLUX.2-dev is
 no longer significant, while the other two remain so. Recognizing the broad
@@ -898,8 +898,8 @@ FLUX.2-dev, and 32\% for FLUX.2-klein-4B). The low value for artifacts and
 foods says more about the labels than about the images. In the blind call, the
 judge labels 19 to 23 of the 25 artifact and food images per model as
 ``Object'', and
-the grounded call accepts this label for an expected type such as ``food'',
-``pastry'', or ``sword'' in only 27 of 64 cases. The feature rates for the same
+the grounded call accepts this label for an expected type such as ``Food'',
+``Pastry'', or ``Sword'' in only 27 of 64 cases. The feature rates for the same
 category are much higher (76\%, 60\%, and 32\%), so the models often do draw the
 distinctive feature of the artifact or dish.
 
@@ -1021,7 +1021,7 @@ come about and are not used as additional statistical evidence.
 \subsection{An Animal: Platypus}
 
 Figure~\ref{fig:platypus} shows the three images for \emph{Platypus}, a curated
-entity with the expected type ``mammal'' and the distinctive feature ``duck-like
+entity with the expected type ``Mammal'' and the distinctive feature ``duck-like
 bill and beaver-like tail''. The three images separate the three research
 questions. GPT Image 2 draws a brown semi-aquatic mammal with a duck-like bill
 and webbed feet: type, feature, and all six propositions are correct.
@@ -1029,7 +1029,7 @@ FLUX.2-dev draws a brown semi-aquatic mammal with a flat tail but a rounded dark
 snout instead of a duck-like bill. The type is correct and none of its seven
 propositions contradicts the summary, but the feature that separates a platypus
 from an otter or a beaver is missing, so RQ2 fails. FLUX.2-klein-4B draws a
-capybara: the type ``animal'' is still accepted, but the feature is missing and
+capybara: the type ``Animal'' is still accepted, but the feature is missing and
 all five propositions are judged false. In the sense of this benchmark, a
 generation is good only if it passes all three checks, as the GPT Image 2
 platypus does.
@@ -1116,7 +1116,7 @@ proposition against the reference.
 
 \subsection{A Person: Boudica}
 
-\emph{Boudica} is a curated historical figure with the expected type ``queen''
+\emph{Boudica} is a curated historical figure with the expected type ``Queen''
 and the distinctive feature ``long red hair and ancient tribal clothing''. Her
 lead summary describes what she did, not how she looked: she was a queen of the
 British Iceni tribe who led a failed uprising against the Roman Empire in AD 60
@@ -1262,9 +1262,9 @@ Section~\ref{sec:methodology-critique} returns to this case.
 \subsection{Recurring Failure Patterns}
 
 Bad generations follow four recurring patterns, listed in
-Table~\ref{tab:failure-patterns}. For Random entities such as Dennis Dart
-(Figure~\ref{fig:problem-example}), only the third research question applies,
-because they have no annotated type or feature.
+Table~\ref{tab:failure-patterns}. Three of the six examples, including Dennis Dart
+(Figure~\ref{fig:problem-example}), are Random entities without an annotated type
+or feature, so the table compares all examples only by their false propositions.
 
 \begin{table}[ht]
 \centering
@@ -1272,7 +1272,7 @@ because they have no annotated type or feature.
 \caption{Recurring patterns of bad generations, with examples from the corpus.
 The last column gives false propositions out of all propositions for the image.}
 \label{tab:failure-patterns}
-\begin{tabular}{p{3.3cm}p{3.6cm}p{5.0cm}r}
+\begin{tabular}{>{\raggedright\arraybackslash}p{3.3cm}>{\raggedright\arraybackslash}p{3.6cm}>{\raggedright\arraybackslash}p{5.0cm}r}
 \toprule
 Pattern & Entity (model) & What the image shows & False \\
 \midrule
@@ -1299,7 +1299,7 @@ of thing altogether. On the common set, every proposition is judged false for
 Section~\ref{sec:limitations}): 13 for GPT Image 2, 12 for FLUX.2-dev, and 29
 for FLUX.2-klein-4B. In 24 of these 54 images the model drew a person. The last
 pattern is the hardest to see in the numbers, because an image that asserts
-almost nothing about the entity cannot contradict the reference. The FLUX.2-dev
+almost nothing about the entity cannot contradict the lead summary. The FLUX.2-dev
 image for \emph{Freedom of religion in Austria} passes every check, yet it shows
 nothing about religious freedom. For such images a hallucination rate of zero
 means ``nothing false'', not ``knowledge shown''.
@@ -1392,6 +1392,7 @@ contradiction comes from the design of the extrapolation measure, not from the
 models, and outlines an experiment design that would avoid it.
 
 \subsection{Why the Extrapolation Does Not Separate the Models}
+\label{sec:extrapolation-critique}
 
 The extrapolation multiplies, for each tier, the number of propositions per
 image by the share of them that is not contradicted
@@ -1404,7 +1405,7 @@ answers with lists of similar length for almost every image: 7.4 propositions
 on average with a standard deviation of 1.4, and between 7.1 and 7.7 per model
 (Table~\ref{tab:fair-overall}). A recognizable image of the requested entity and
 an image of something else receive lists of about the same length. On the
-curated subset, images that show the distinctive feature yield 6.8 propositions
+curated subset (without Montezuma), images that show the distinctive feature yield 6.8 propositions
 and images that do not yield 7.0. The count therefore describes the answering
 style of the judge more than the knowledge of the generator.
 
@@ -1501,7 +1502,7 @@ propositions the judge writes. Text written into the image would have to be
 masked first, since it often names the entity (Section~\ref{sec:limitations}).
 
 \item \textbf{Sampling and validation.} Because the Long-tail tier carries 94\%
-of the weight, an extrapolation needs many more Long-tail entities than the 66
+of the weight, an extrapolation needs many more Long-tail entities than the 65
 used here, or a sample drawn in proportion to the population. Several images
 per entity would capture the variation between generations, and a sample of
 propositions annotated by humans would show how often the judge is right, as
@@ -1537,15 +1538,13 @@ statements, not as a measure of how much the image shows about the entity.
 \subsection{Limitations}
 \label{sec:limitations}
 
-\paragraph{What RQ3 measures.} The judge counts propositions that the reference
-shows to be false. Propositions that the lead summary does not mention are not
-counted, so the complement of the hallucination rate is an upper bound on the
-share of true propositions. For abstract entities, whose images assert little
-that the summary could contradict, a low hallucination count does not show that
-the concept was visualized (Section~\ref{sec:qualitative-examples}).
+\paragraph{What RQ3 measures.} The judge can refute a proposition but not
+confirm it: propositions that the lead summary does not mention are not
+counted, so the complement of the hallucination rate is only an upper bound on
+the share of true propositions (Section~\ref{sec:extrapolation-critique}).
 
 \paragraph{Judge.} All decisions are made by one open-weight model,
-\texttt{gemma-4-31B-it}, which is smaller than proprietary evaluators such as
+\texttt{gemma-4-31B-it}, rather than a large proprietary evaluator such as
 GPT-4V~\citep{gpt4v2024}, and its decisions were not validated against human
 judgements. The judge is also not fully consistent: it accepted the label
 ``Object'' as a type match for artifacts and foods in 27 of 64 cases and
@@ -1583,10 +1582,6 @@ historical figures. The common set keeps these refusals from being scored as
 errors, but conclusions about GPT Image 2 apply only to the entities it
 generated, and the missing entities are not a random sample.
 
-\paragraph{Proposition count.} The number of propositions is only a proxy for
-how much an image shows: a longer description is not necessarily more
-informative, and a shorter one is not necessarily more accurate.
-
 \chapter{Conclusion and Future Work}
 
 This thesis introduced a benchmark for the factual knowledge of text-to-image
@@ -1606,7 +1601,7 @@ The extrapolation to the English Wikipedia credits all three models with about
 43~million non-contradicted propositions, although they differ clearly in RQ2.
 The critical assessment in Section~\ref{sec:methodology-critique} traces this to
 the design of the measure: the judge writes about seven propositions for almost
-any image, and a short reference text can refute only few of them, so the count
+any image, and a short reference text can refute only a few of them, so the count
 hardly depends on whether the model knows the entity. The extrapolated number is
 therefore an upper bound on unrefuted visual statements, not an estimate of
 visual knowledge.
@@ -1665,14 +1660,6 @@ hallucination tables, proposition-count tables, correlations, the
 extrapolation diagnostics used in Section~\ref{sec:methodology-critique}, and
 figures from these inputs. This separation between raw rows and derived tables allows the
 reported values to be recomputed after changing a metric or adding another model.
-
-The generation script uses ten concurrent workers and skips existing files, but
-it does not record per-request durations. The evaluation log records a
-wall-clock run from 13 August 2026 23:05:48 to 14 August 2026 03:02:26 for the
-766 queued image tasks, approximately 3 hours 57 minutes including Wikipedia
-prefetching and retries. This is a reproducibility observation for that run,
-not a general speed benchmark; request latency depends on provider load,
-concurrency, and retries.
 
 The public code and generated assets are available at
 \url{https://github.com/mrEkso/t2i-factuality-benchmark}.
@@ -1733,6 +1720,8 @@ with exactly these keys:
    ground truth.
 \end{verbatim}
 }
+
+\input{parts/appendix_curated}
 
 \bibliographystyle{template/acl_natbib}
 \bibliography{references}
