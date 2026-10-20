@@ -47,3 +47,6 @@ Template/Presentations/
 # OS/editor files
 .DS_Store
 .vscode/
+# Signed thesis and its PDF/A copy (contain the handwritten signature)
+main_signed.pdf
+pdfa/

@@ -2,7 +2,8 @@
 
 Steps:
 1. Optionally put a scanned page (the signed Statement of authorship) in place of
-   page N, scaled to fit A4. The original page object is kept, so links and
+   page N, scaled to fit A4 without distortion. Dark strips at the edges of the
+   scan are trimmed and the grey paper tone is set to white. The original page object is kept, so links and
    destinations that point to it stay valid.
 2. Scale every page that is not A4 (e.g. a scan inserted at pixel size) to fit A4,
    centred.
@@ -17,7 +18,10 @@ Usage:
 """
 
 import argparse
+import io
 import re
+
+from PIL import Image
 
 from pypdf import PdfReader, PdfWriter, Transformation
 from pypdf.generic import ContentStream, NameObject, NumberObject, RectangleObject
@@ -33,6 +37,50 @@ def fit_to_a4(width, height):
     tx = (A4[0] - width * scale) / 2
     ty = (A4[1] - height * scale) / 2
     return Transformation().scale(scale).translate(tx, ty)
+
+
+def clean_scan(page):
+    """Return a cleaned copy of a page that holds a single scanned image, or None.
+
+    Trims the dark strips at the edges (table or scanner lid visible next to the
+    paper) and lifts the light grey paper tone to white. The aspect ratio is kept.
+    """
+    xobjects = page.get("/Resources", {}).get("/XObject", {})
+    images = [x.get_object() for x in xobjects.values()]
+    if len(images) != 1 or images[0].get("/Subtype") != "/Image":
+        return None
+    im = Image.open(io.BytesIO(images[0]._data)).convert("RGB")
+    gray = im.convert("L")
+    w, h = gray.size
+
+    def bright(values):
+        return sum(values) / len(values) > 240
+
+    def col(x):
+        return [gray.getpixel((x, y)) for y in range(0, h, 4)]
+
+    def row(y):
+        return [gray.getpixel((x, y)) for x in range(0, w, 4)]
+
+    left, right, top, bottom = 0, w, 0, h
+    while left < w // 10 and not bright(col(left)):
+        left += 1
+    while right > w - w // 10 and not bright(col(right - 1)):
+        right -= 1
+    while top < h // 10 and not bright(row(top)):
+        top += 1
+    while bottom > h - h // 10 and not bright(row(bottom - 1)):
+        bottom -= 1
+    margin = 6  # also drop the soft shadow next to the strip
+    box = (left + margin * (left > 0), top + margin * (top > 0),
+           right - margin * (right < w), bottom - margin * (bottom < h))
+    im = im.crop(box).point(lambda v: min(255, round(v * 255 / 242)))
+
+    buf = io.BytesIO()
+    im.save(buf, format="PDF", resolution=300, quality=92)
+    print(f"Scan: trimmed {box[0]}/{w - box[2]}/{box[1]}/{h - box[3]} px "
+          "(left/right/top/bottom), paper tone set to white")
+    return PdfReader(buf).pages[0]
 
 
 def is_a4(page):
@@ -82,6 +130,7 @@ def main():
         src_no = args.signature_source_page or (
             1 if len(scan_reader.pages) == 1 else args.signature_page)
         scan = scan_reader.pages[src_no - 1]
+        scan = clean_scan(scan) or scan
         target = writer.pages[args.signature_page - 1]
         target.replace_contents(ContentStream(None, writer))
         target[NameObject("/MediaBox")] = RectangleObject([0, 0, *A4])
@@ -94,7 +143,13 @@ def main():
     for no, page in enumerate(writer.pages, 1):
         if not is_a4(page):
             w, h = float(page.mediabox.width), float(page.mediabox.height)
-            page.add_transformation(fit_to_a4(w, h))
+            scan = clean_scan(page)
+            if scan is not None:
+                page.replace_contents(ContentStream(None, writer))
+                sw, sh = float(scan.mediabox.width), float(scan.mediabox.height)
+                page.merge_transformed_page(scan, fit_to_a4(sw, sh))
+            else:
+                page.add_transformation(fit_to_a4(w, h))
             page.mediabox = RectangleObject([0, 0, *A4])
             for key in ("/CropBox", "/TrimBox", "/BleedBox", "/ArtBox"):
                 page.pop(key, None)

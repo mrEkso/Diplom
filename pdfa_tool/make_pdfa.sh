@@ -9,7 +9,8 @@
 #                      replaces page N of input.pdf (default N = 3)
 #
 # Output: Diplom/pdfa/Okaianchenko_Bachelor_Thesis.pdf, checked with veraPDF.
-# Needs: brew install ghostscript verapdf  (pypdf is installed into pdfa_tool/.venv)
+# Images keep their full resolution; PNG figures stay lossless.
+# Needs: brew install ghostscript verapdf  (pypdf and Pillow go into pdfa_tool/.venv)
 set -euo pipefail
 
 TOOL_DIR=${0:A:h}
@@ -24,8 +25,8 @@ VENV=$TOOL_DIR/.venv
 
 [[ -f $IN ]] || { echo "Input not found: $IN" >&2; exit 1; }
 [[ -f $ICC ]] || { echo "sRGB ICC profile not found (brew install ghostscript)" >&2; exit 1; }
-if [[ ! -x $VENV/bin/python ]]; then
-  python3 -m venv "$VENV" && "$VENV/bin/pip" -q install pypdf
+if ! "$VENV/bin/python" -c "import pypdf, PIL" 2>/dev/null; then
+  python3 -m venv "$VENV" && "$VENV/bin/pip" -q install pypdf pillow
 fi
 mkdir -p "$OUT_DIR"
 TMP=$(mktemp -d)
@@ -37,7 +38,11 @@ echo "Input:  $IN"
 gs -q -dBATCH -dNOPAUSE -dNOOUTERSAVE \
   -sDEVICE=pdfwrite -dPDFA=2 -dPDFACompatibilityPolicy=1 \
   -sColorConversionStrategy=RGB -sProcessColorModel=DeviceRGB \
-  -dPDFSETTINGS=/printer -dAutoRotatePages=/None \
+  -dAutoRotatePages=/None \
+  -dDownsampleColorImages=false -dDownsampleGrayImages=false -dDownsampleMonoImages=false \
+  -dAutoFilterColorImages=false -dColorImageFilter=/FlateEncode \
+  -dAutoFilterGrayImages=false -dGrayImageFilter=/FlateEncode \
+  -dPassThroughJPEGImages=true \
   --permit-file-read="$ICC" -sPDFA_ICC="$ICC" \
   -sOutputFile="$OUT" "$TOOL_DIR/PDFA_def.ps" "$TMP/prepared.pdf" 2>&1 \
   | grep -v -E 'Overprint Mode|overprint mode not set|Interpolate true|^$' || true
